@@ -305,7 +305,7 @@ static VALUE IntUnpack(int *up, unsigned num)
 }
 
 static VALUE SecureObject(VALUE obj, const char *name) {
-    if (OBJ_TAINTED(obj) && ruby_safe_level >= 1) {
+    if (OBJ_TAINTED(obj) && rb_safe_level() >= 1) {
 	rb_raise(rb_eSecurityError, "tainted %s", name);
     }
     return obj;

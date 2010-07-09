@@ -20,7 +20,7 @@ static VALUE sf_add_field(int argc, VALUE *args, VALUE obj)
 	rb_raise(rb_eArgError, "specify decimal places for Float attribute");
     }
     Data_Get_Struct(obj, shapefile_t, self);
-    r = shapefile_add_field(self, RSTRING(name)->ptr, atype, width, wdeci);
+    r = shapefile_add_field(self, RSTRING_PTR(name), atype, width, wdeci);
     return obj;
 }
 
@@ -272,12 +272,12 @@ static VALUE sf_s_new(int argc, VALUE *argv, VALUE klass)
     }
     sf = Data_Wrap_Struct(klass, 0, shapefile_close, sfile);
     if (argc > 2) {
-	for (i = 0; i < RARRAY(attrs)->len; i++) {
-	    VALUE p = RARRAY(attrs)->ptr[i];
+	for (i = 0; i < RARRAY_LEN(attrs); i++) {
+	    VALUE p = RARRAY_PTR(attrs)[i];
 	    if (T_ARRAY != TYPE(p)) {
 		rb_raise(rb_eArgError, "non-array content in attrs");
 	    }
-	    sf_add_field(RARRAY(p)->len, RARRAY(p)->ptr, sf);
+	    sf_add_field(RARRAY_LEN(p), RARRAY_PTR(p), sf);
 	}
     }
     return YieldIfPossible(proc, sf);

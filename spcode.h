@@ -8,12 +8,12 @@ static int *IntPack(VALUE array, int decode_p)
     int *buf;
     int i;
     Check_Type(array, T_ARRAY);
-    buf = xmalloc(sizeof(int) * RARRAY(array)->len);
-    for (i = 0; i < RARRAY(array)->len; i++) {
+    buf = xmalloc(sizeof(int) * RARRAY_LEN(array));
+    for (i = 0; i < RARRAY_LEN(array); i++) {
 	if (decode_p)
-	    buf[i] = Ruby2PartType(RARRAY(array)->ptr[i]);
+	    buf[i] = Ruby2PartType(RARRAY_PTR(array)[i]);
 	else
-	    buf[i] = NUM2INT(RARRAY(array)->ptr[i]);
+	    buf[i] = NUM2INT(RARRAY_PTR(array)[i]);
     }
     return buf;
 }
@@ -25,11 +25,11 @@ static double *DoublePack(VALUE array, double nilval)
     if (NIL_P(array))
 	return NULL;
     Check_Type(array, T_ARRAY);
-    buf = xmalloc(sizeof(double) * RARRAY(array)->len);
-    for (i = 0; i < RARRAY(array)->len; i++) {
+    buf = xmalloc(sizeof(double) * RARRAY_LEN(array));
+    for (i = 0; i < RARRAY_LEN(array); i++) {
 	VALUE v;
-	v = RARRAY(array)->ptr[i];
-	buf[i] = (NIL_P(v) ? nilval : NUM2DBL(RARRAY(array)->ptr[i]));
+	v = RARRAY_PTR(array)[i];
+	buf[i] = (NIL_P(v) ? nilval : NUM2DBL(RARRAY_PTR(array)[i]));
     }
     return buf;
 }
@@ -58,16 +58,16 @@ static void HashLoadAttrib(VALUE vshape, VALUE hash)
     ary = rb_funcall(hash, to_a, 0);
     if (T_ARRAY != TYPE(ary))
 	return;
-    argv = RARRAY(ary)->ptr;
-    for (i = 0; i < RARRAY(ary)->len; i++) {
+    argv = RARRAY_PTR(ary);
+    for (i = 0; i < RARRAY_LEN(ary); i++) {
 	VALUE pair = argv[i];
 	VALUE key, val;
 	if (T_ARRAY != TYPE(pair))
 	    continue;
-	if (RARRAY(pair)->len < 2)
+	if (RARRAY_LEN(pair) < 2)
 	    continue;
-	key = RARRAY(pair)->ptr[0];
-	val = RARRAY(pair)->ptr[1];
+	key = RARRAY_PTR(pair)[0];
+	val = RARRAY_PTR(pair)[1];
 	if (T_STRING != TYPE(key))
 	    continue;
 	sp_field_set(vshape, key, val);
@@ -122,8 +122,8 @@ static int CheckPartSize(int argc, VALUE *argv, int *part_start,
 	    rb_raise(rb_eArgError, "arg %d must be Array", i);
 	    return -1;
 	}
-	partlen = RARRAY(argv[i])->len;
-	first = RARRAY(argv[i])->ptr[0];
+	partlen = RARRAY_LEN(argv[i]);
+	first = RARRAY_PTR(argv[i])[0];
 	switch (TYPE(first)) {
 	    case T_SYMBOL: case T_STRING:
 		part_type[i] = Ruby2PartType(first);
@@ -149,8 +149,8 @@ static void ExtractXYMZ(VALUE v,
 	idm = rb_intern("m"); idz = rb_intern("z");
     }
     if (T_ARRAY == TYPE(v)) {
-	int argc = RARRAY(v)->len;
-	VALUE *argv = RARRAY(v)->ptr;
+	int argc = RARRAY_LEN(v);
+	VALUE *argv = RARRAY_PTR(v);
 	*x = (argc > 0) ? NUM2DBLo(argv[0]) : 0.0;
 	*y = (argc > 1) ? NUM2DBLo(argv[1]) : 0.0;
 	*m = SHP_NUM2DBL((argc > 2) ? argv[2] : Qnil);
@@ -206,7 +206,7 @@ static shape_t *NewMultiPart(int argc, VALUE *argv, VALUE klass, int shapetype)
     z = dblock + n_vert * 3;
     for (ipart = 0; ipart < argc; ipart++) {
 	CollectPoints(
-	    RARRAY(argv[ipart])->len, RARRAY(argv[ipart])->ptr,
+	    RARRAY_LEN(argv[ipart]), RARRAY_PTR(argv[ipart]),
 	    x + part_start[ipart], y + part_start[ipart],
 	    m + part_start[ipart], z + part_start[ipart]);
     }
@@ -263,7 +263,7 @@ static VALUE NewShape(int argc, VALUE *argv, VALUE klass, int shapetype)
     int multipart;
     monitor(("NewShape"));
     if (T_ARRAY == TYPE(argv[0])) {
-	switch (TYPE( RARRAY(argv[0])->ptr[0] )) {
+	switch (TYPE( RARRAY_PTR(argv[0])[0] )) {
 	case T_FIXNUM:
 	case T_FLOAT:
 	    multipart = 0;
@@ -352,14 +352,14 @@ static void PointAddAttr(VALUE pt, VALUE attrs)
     Check_Type(attrs, T_HASH);
     ary = rb_funcall(attrs, rb_intern("to_a"), 0);
     Check_Type(ary, T_ARRAY);
-    argv = RARRAY(ary)->ptr;
-    argc = RARRAY(ary)->len;
+    argv = RARRAY_PTR(ary);
+    argc = RARRAY_LEN(ary);
     for (i = 0; i < argc; i++) {
 	VALUE *pair;
 	Check_Type(argv[i], T_ARRAY);
-	if (RARRAY(argv[i])->len != 2)
+	if (RARRAY_LEN(argv[i]) != 2)
 	    rb_bug("hash.to_a member has weird size");
-	pair = RARRAY(argv[i])->ptr;
+	pair = RARRAY_PTR(argv[i]);
 	sp_field_set(pt, pair[0], pair[1]);
     }
 }
@@ -511,7 +511,7 @@ static VALUE sp_field_set(VALUE obj, VALUE name, VALUE val)
 	    break;
 	case T_FLOAT:
 	    self->attr[ofs].type = FTDouble;
-	    self->attr[ofs].val.fval = RFLOAT(val)->value;
+	    self->attr[ofs].val.fval = RFLOAT_VALUE(val);
 	    break;
 	case T_NIL:
 	    self->attr[ofs].type = -1;
