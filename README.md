@@ -7,7 +7,7 @@ prasinos@users.sourceforge.net.
 How to install
 -----------------
 
-* You must have ShapeLib and ruby.
+* Install the shapelib C library with your Unix package management system.
 * It is expected to run on all ruby-running environments. But it is tested
   only on RedHat Enterprise Linux 4.0 and Vine Linux 3.0.
   
@@ -18,34 +18,19 @@ Install MacPorts.  Use it to install the shapelib C library:
 
     sudo port install shapelib
 
-Now install the Rubygem, pointing it to the port installation:
+Now install the Rubygem:
 
     gem install shapelib
-
-Quick directions
-----------------
-
-    $ tar xvfz ruby-shapelib.tar.gz      (you did it if you see this file)
-    $ cd ruby-shapelib
-    $ ruby ./extconf.rb
-    $ make 
-    # make install
-  
 
 Troubleshooting
 ---------------
 
-* I have ruby but can't run extconf.rb
-  
-  Some Linux distributions divide Ruby into several packages such as
-  "ruby" and "ruby-devel". You may have to install additional packages.
+* I have shapelib installed but the build fails
 
-* I have shapelib installed but extconf.rb fails
+  Try --with-shapelib-include= and --with-shapelib-lib= options:
+  gem install shapelib -- --with-shapelib-include=...
 
-  Try --with-shapelib-include= and --with-shapelib-lib= options of extconf.rb.
-
-If above advice doesn't help, please visit
-http://sourceforge.net/projects/ruby-shapelib and post a message.
+If above advice doesn't help, please visit http://github.com/mperham/shapelib and post an issue.
 
 How to use
 ==========
