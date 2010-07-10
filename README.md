@@ -1,15 +1,27 @@
-                        README for Ruby-ShapeLiB
+Shapelib bindings for Ruby
+===============================
 
-			                      prasinos@users.sourceforge.net
-
-This is a wrapper module of Shapefile C Library for Ruby.
+This is a wrapper module of Shapefile C Library for Ruby.  Originally authored by
+prasinos@users.sourceforge.net.
 
 How to install
-==============
+-----------------
 
 * You must have ShapeLib and ruby.
 * It is expected to run on all ruby-running environments. But it is tested
   only on RedHat Enterprise Linux 4.0 and Vine Linux 3.0.
+  
+OSX
+----------------
+
+Install MacPorts.  Use it to install the shapelib C library:
+
+    sudo port install shapelib
+
+Now install the gem, pointing it to the port installation:
+
+    gem build shapelib.gemspec
+    gem install shapelib-X.X.X.gem -- --with-opt-dir=/opt/local
 
 Quick directions
 ----------------
@@ -19,6 +31,7 @@ Quick directions
     $ ruby ./extconf.rb
     $ make 
     # make install
+  
 
 Troubleshooting
 ---------------
