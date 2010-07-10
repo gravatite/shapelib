@@ -1,4 +1,4 @@
-module ShapeLib
+module Shapelib
   class Shape
     def each
       latlngs.each do |l|

@@ -60,9 +60,9 @@ static void register_methods(VALUE klass, method_table_entry *table)
     }
 }
 
-void Init_shapelib()
+void Init_shapelib_ext()
 {
-    mShapeLib = rb_define_module("ShapeLib");
+    mShapeLib = rb_define_module("Shapelib");
     cShapeFile = rb_define_class_under(mShapeLib, "ShapeFile", rb_cObject);
     cShape = rb_define_class_under(mShapeLib, "Shape", rb_cObject);
     cPoint = rb_define_class_under(mShapeLib, "Point", cShape);

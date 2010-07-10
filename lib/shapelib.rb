@@ -1,2 +1,2 @@
-require 'shapelib.so'
-require 'shape_lib/shape'
+require 'shapelib_ext'
+require 'shapelib/shape'
