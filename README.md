@@ -18,10 +18,9 @@ Install MacPorts.  Use it to install the shapelib C library:
 
     sudo port install shapelib
 
-Now install the gem, pointing it to the port installation:
+Now install the Rubygem, pointing it to the port installation:
 
-    gem build shapelib.gemspec
-    gem install shapelib-X.X.X.gem -- --with-opt-dir=/opt/local
+    gem install shapelib
 
 Quick directions
 ----------------
@@ -51,7 +50,7 @@ http://sourceforge.net/projects/ruby-shapelib and post a message.
 How to use
 ==========
 
-    Please see Interface.html.
+    Please see doc/Interface.html.
 
 License issues
 ==============
