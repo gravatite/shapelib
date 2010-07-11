@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["prasinos@users.sourceforge.net", "Mike Mangino", "Mike Perham"]
-  s.date = %q{2010-07-09}
+  s.date = %q{2010-07-10}
   s.description = %q{Simple wrapper around the shapelib library}
   s.email = %q{mmangino@elevatedrails.com}
   s.extensions = ["ext/shapelib_ext/extconf.rb"]
@@ -36,9 +36,12 @@ Gem::Specification.new do |s|
      "lib/shapelib.rb",
      "lib/shapelib/shape.rb",
      "lib/shapelib/version.rb",
-     "test/libtest.rb",
-     "test/zsample1.rb",
-     "test/ztest1.rb"
+     "shapelib.gemspec",
+     "test/data/ZillowNeighborhoods-CA/ZillowNeighborhoods-CA.dbf",
+     "test/data/ZillowNeighborhoods-CA/ZillowNeighborhoods-CA.prj",
+     "test/data/ZillowNeighborhoods-CA/ZillowNeighborhoods-CA.shp",
+     "test/data/ZillowNeighborhoods-CA/ZillowNeighborhoods-CA.shp.xml",
+     "test/data/ZillowNeighborhoods-CA/ZillowNeighborhoods-CA.shx"
   ]
   s.homepage = %q{http://github.com/mperham/shapelib}
   s.rdoc_options = ["--charset=UTF-8"]
@@ -46,9 +49,7 @@ Gem::Specification.new do |s|
   s.rubygems_version = %q{1.3.7}
   s.summary = %q{Simple wrapper around the shapelib library}
   s.test_files = [
-    "test/libtest.rb",
-     "test/zsample1.rb",
-     "test/ztest1.rb"
+    "test/test_zillow_data.rb"
   ]
 
   if s.respond_to? :specification_version then
