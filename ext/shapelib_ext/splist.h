@@ -21,27 +21,9 @@ static VALUE sp_to_h(VALUE obj)
     return h;
 }
 
-static VALUE sp_inspect(VALUE obj)
-{
-    VALUE tos;
-    static ID inspect = 0;
-    static ID id_plus, id_class, id_to_s;
-    static VALUE classnm;
-    if (inspect == 0) {
-	inspect = rb_intern("inspect");
-	id_plus = rb_intern("+");
-	id_class = rb_intern("class");
-	id_to_s = rb_intern("to_s");
-    }
-    classnm = rb_funcall(rb_funcall(obj, id_class, 0), id_to_s, 0);
-    tos = rb_funcall(sp_to_h(obj), inspect, 0);
-    return rb_funcall(classnm, id_plus, 1, tos);
-}
-
 static method_table_entry sp_methods[] = {
     { "[]",		sp_field_get, 1 },
     { "[]=",		sp_field_set, 2 },
-    { "inspect",	sp_inspect, 0 },
     { "maxbound",	sp_maxbound, 0 },
     { "minbound",	sp_minbound, 0 },
     { "mvals",		sp_mvals, 0 },
