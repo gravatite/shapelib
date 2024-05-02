@@ -64,20 +64,36 @@ void Init_shapelib_ext()
 {
     mShapeLib = rb_define_module("Shapelib");
     cShapeFile = rb_define_class_under(mShapeLib, "ShapeFile", rb_cObject);
+    rb_undef_alloc_func(cShapeFile);
     cShape = rb_define_class_under(mShapeLib, "Shape", rb_cObject);
+    rb_undef_alloc_func(cShape);
     cPoint = rb_define_class_under(mShapeLib, "Point", cShape);
+    rb_undef_alloc_func(cPoint);
     cPointM = rb_define_class_under(mShapeLib, "PointM", cPoint);
+    rb_undef_alloc_func(cPointM);
     cPointZ = rb_define_class_under(mShapeLib, "PointZ", cPointM);
+    rb_undef_alloc_func(cPointZ);
     cArc = rb_define_class_under(mShapeLib, "Arc", cShape);
+    rb_undef_alloc_func(cArc);
     cArcM = rb_define_class_under(mShapeLib, "ArcM", cArc);
+    rb_undef_alloc_func(cArcM);
     cArcZ = rb_define_class_under(mShapeLib, "ArcZ", cArcM);
+    rb_undef_alloc_func(cArcZ);
     cPolygon = rb_define_class_under(mShapeLib, "Polygon", cShape);
+    rb_undef_alloc_func(cPolygon);
     cPolygonM = rb_define_class_under(mShapeLib, "PolygonM", cPolygon);
+    rb_undef_alloc_func(cPolygonM);
     cPolygonZ = rb_define_class_under(mShapeLib, "PolygonZ", cPolygonM);
+    rb_undef_alloc_func(cPolygonZ);
     cMultiPoint = rb_define_class_under(mShapeLib, "MultiPoint", cShape);
+    rb_undef_alloc_func(cMultiPoint);
     cMultiPointM = rb_define_class_under(mShapeLib, "MultiPointM", cMultiPoint);
+    rb_undef_alloc_func(cMultiPointM);
     cMultiPointZ = rb_define_class_under(mShapeLib, "MultiPointZ", cMultiPointM);
+    rb_undef_alloc_func(cMultiPointZ);
     cMultiPatch = rb_define_class_under(mShapeLib, "MultiPatch", cShape);
+    rb_undef_alloc_func(cMultiPatch);
+
     rb_define_module_function(mShapeLib, "new_point", sl_m_new_point, -1);
     rb_define_singleton_method(cShapeFile, "new", sf_s_new, -1);
     rb_define_singleton_method(cShapeFile, "open", sf_s_open, -1);
