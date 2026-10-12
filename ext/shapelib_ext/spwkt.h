@@ -28,7 +28,7 @@ static VALUE pt_wkt(VALUE obj)
     size_t buflen;
     char *buf, *cur, *stop;
     VALUE wkt;
-    Data_Get_Struct(obj, shape_t, self);
+    TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
     buflen = wkt_dlen * 2 + 9;
     cur = buf = xmalloc(buflen + 1);
     stop = buf + buflen;
@@ -49,7 +49,7 @@ static VALUE mp_wkt(VALUE obj)
     size_t buflen;
     char *buf, *cur, *stop;
     int iv;
-    Data_Get_Struct(obj, shape_t, self);
+    TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
     buflen = (2 * wkt_dlen + 3) * self->obj->nVertices + 11;
     cur = buf = xmalloc(buflen + 1);
     stop = buf + buflen;
@@ -104,7 +104,7 @@ static VALUE WKTSinglePolygon(SHPObject *obj)
 static VALUE pl_wkt(VALUE obj)
 {
     shape_t *self;
-    Data_Get_Struct(obj, shape_t, self);
+    TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
     /* === BUG ===
      * following code doesn't consider the possibilities:
      * - there may be multiple outer loop in a Polygon Shape.
@@ -177,7 +177,7 @@ static VALUE WKTMultiArc(SHPObject *obj)
 static VALUE arc_wkt(VALUE obj)
 {
     shape_t *self;
-    Data_Get_Struct(obj, shape_t, self);
+    TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
     if (self->obj->nParts > 1) {
 	return WKTMultiArc(self->obj);
     } else {
@@ -188,7 +188,7 @@ static VALUE arc_wkt(VALUE obj)
 static VALUE sp_wkt(VALUE obj)
 {
     shape_t *self;
-    Data_Get_Struct(obj, shape_t, self);
+    TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
     switch (self->obj->nSHPType) {
 	case SHPT_POINT:
 	case SHPT_POINTM:
