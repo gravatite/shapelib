@@ -105,7 +105,7 @@ static VALUE sp_s_new(VALUE klass, VALUE hash)
     if (yvals) free(yvals);
     if (zvals) free(zvals);
     if (mvals) free(mvals);
-    vshape = Data_Wrap_Struct(qlass, 0, shape_close, shape);
+    vshape = TypedData_Wrap_Struct(qlass, &shape_data_type, shape);
     HashLoadAttrib(vshape, hash);
     return vshape;
 }
@@ -280,7 +280,7 @@ static VALUE NewShape(int argc, VALUE *argv, VALUE klass, int shapetype)
     } else {
 	shape = NewSinglePart(argc, argv, klass, shapetype);
     }
-    return Data_Wrap_Struct(klass, 0, shape_close, shape);
+    return TypedData_Wrap_Struct(klass, &shape_data_type, shape);
 }
 
 static VALUE MultiPointNew(int argc, VALUE *argv, VALUE klass, int shapetype)
@@ -300,7 +300,7 @@ static VALUE MultiPointNew(int argc, VALUE *argv, VALUE klass, int shapetype)
     CollectPoints(argc, argv, x, y, m, z);
     shape = shape_new_obj(shapetype, 1, part_start, NULL, n_vert, x, y, m, z);
     free(dblock);
-    return Data_Wrap_Struct(klass, 0, shape_close, shape);
+    return TypedData_Wrap_Struct(klass, &shape_data_type, shape);
 }
 
 static VALUE arc_s_new(int argc, VALUE *argv, VALUE klass) {
@@ -372,7 +372,7 @@ static VALUE pt_s_new(int argc, VALUE *argv, VALUE klass)
     rb_scan_args(argc, argv, "21", &vx, &vy, &attrs);
     shape = shape_new_point(SHPT_POINT,
 	NUM2DBLo(vx), NUM2DBLo(vy), 0.0, 0.0);
-    pt = Data_Wrap_Struct(klass, 0, shape_close, shape);
+    pt = TypedData_Wrap_Struct(klass, &shape_data_type, shape);
     if (!NIL_P(attrs)) {
 	PointAddAttr(pt, attrs);
     }
@@ -386,7 +386,7 @@ static VALUE ptm_s_new(int argc, VALUE *argv, VALUE klass)
     rb_scan_args(argc, argv, "31", &vx, &vy, &vm, &attrs);
     shape = shape_new_point(SHPT_POINTM,
 	NUM2DBLo(vx), NUM2DBLo(vy), SHP_NUM2DBL(vm), 0.0);
-    pt = Data_Wrap_Struct(klass, 0, shape_close, shape);
+    pt = TypedData_Wrap_Struct(klass, &shape_data_type, shape);
     if (!NIL_P(attrs)) {
 	PointAddAttr(pt, attrs);
     }
@@ -400,7 +400,7 @@ static VALUE ptz_s_new(int argc, VALUE *argv, VALUE klass)
     rb_scan_args(argc, argv, "41", &vx, &vy, &vm, &vz, &attrs);
     shape = shape_new_point(SHPT_POINTZ,
 	NUM2DBLo(vx), NUM2DBLo(vy), SHP_NUM2DBL(vm), NUM2DBLo(vz));
-    pt = Data_Wrap_Struct(klass, 0, shape_close, shape);
+    pt = TypedData_Wrap_Struct(klass, &shape_data_type, shape);
     if (!NIL_P(attrs)) {
 	PointAddAttr(pt, attrs);
     }
@@ -431,7 +431,7 @@ static void Attr_to_Hash(VALUE h, VALUE obj)
 {
     shape_t *self;
     int i;
-    Data_Get_Struct(obj, shape_t, self);
+    TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
     if (self->nattr <= 0)
 	return;
     for (i = 0; i < self->nattr; i++) {
@@ -466,7 +466,7 @@ static VALUE sp_field_get(VALUE obj, VALUE name)
     char *cname;
     int ofs;
 
-    Data_Get_Struct(obj, shape_t, self);
+    TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
     cname = StringValuePtr(name);
     ofs = shape_attrib_index(self, cname, 0);
     if (ofs < 0) {
@@ -494,7 +494,7 @@ static VALUE sp_field_set(VALUE obj, VALUE name, VALUE val)
     char *cname;
     int	ofs;
 
-    Data_Get_Struct(obj, shape_t, self);
+    TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
     cname = StringValuePtr(name);
     ofs = shape_attrib_index(self, cname, 1);
     if (ofs < 0) {
@@ -527,7 +527,7 @@ static VALUE sp_maxbound(VALUE obj)
 {
     shape_t *self;
     double buf[4];
-    Data_Get_Struct(obj, shape_t, self);
+    TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
     buf[0] = self->obj->dfXMax;
     buf[1] = self->obj->dfYMax;
     buf[2] = self->obj->dfMMax;
@@ -539,7 +539,7 @@ static VALUE sp_minbound(VALUE obj)
 {
     shape_t *self;
     double buf[4];
-    Data_Get_Struct(obj, shape_t, self);
+    TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
     buf[0] = self->obj->dfXMin;
     buf[1] = self->obj->dfYMin;
     buf[2] = self->obj->dfMMin;
@@ -550,28 +550,28 @@ static VALUE sp_minbound(VALUE obj)
 static VALUE sp_mvals(VALUE obj)
 {
     shape_t *self;
-    Data_Get_Struct(obj, shape_t, self);
+    TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
     return DoubleUnpackM(self->obj->padfM, self->obj->nVertices, -1);
 }
 
 static VALUE sp_n_parts(VALUE obj)
 {
     shape_t *self;
-    Data_Get_Struct(obj, shape_t, self);
+    TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
     return INT2NUM(self->obj->nParts);
 }
 
 static VALUE sp_n_vertices(VALUE obj)
 {
     shape_t *self;
-    Data_Get_Struct(obj, shape_t, self);
+    TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
     return INT2NUM(self->obj->nVertices);
 }
 
 static VALUE sp_part_start(VALUE obj)
 {
     shape_t *self;
-    Data_Get_Struct(obj, shape_t, self);
+    TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
     if (self->obj->nParts == 0)
 	return Qnil;
     return IntUnpack(self->obj->panPartStart, self->obj->nParts);
@@ -582,7 +582,7 @@ static VALUE sp_part_type(VALUE obj)
     shape_t *self;
     VALUE ary;
     int i;
-    Data_Get_Struct(obj, shape_t, self);
+    TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
     if (self->obj->nParts == 0)
 	return Qnil;
 #if 0
@@ -598,42 +598,42 @@ static VALUE sp_part_type(VALUE obj)
 static VALUE sp_shape_id(VALUE obj)
 {
     shape_t *self;
-    Data_Get_Struct(obj, shape_t, self);
+    TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
     return (self->obj->nShapeId < 0) ? Qnil : INT2NUM(self->obj->nShapeId);
 }
 
 static VALUE sp_shape_type(VALUE obj)
 {
     shape_t *self;
-    Data_Get_Struct(obj, shape_t, self);
+    TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
     return ShapeType2Ruby(self->obj->nSHPType);
 }
 
 static VALUE sp_rewind(VALUE obj)
 {
     shape_t *self;
-    Data_Get_Struct(obj, shape_t, self);
+    TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
     return SHPRewindObject(NULL, self->obj) ? Qtrue : Qfalse;
 }
 
 static VALUE sp_xvals(VALUE obj)
 {
     shape_t *self;
-    Data_Get_Struct(obj, shape_t, self);
+    TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
     return DoubleUnpack(self->obj->padfX, self->obj->nVertices);
 }
 
 static VALUE sp_yvals(VALUE obj)
 {
     shape_t *self;
-    Data_Get_Struct(obj, shape_t, self);
+    TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
     return DoubleUnpack(self->obj->padfY, self->obj->nVertices);
 }
 
 static VALUE sp_zvals(VALUE obj)
 {
     shape_t *self;
-    Data_Get_Struct(obj, shape_t, self);
+    TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
     return DoubleUnpack(self->obj->padfZ, self->obj->nVertices);
 }
 
@@ -644,7 +644,7 @@ static VALUE sp_zvals(VALUE obj)
 static VALUE pt_x(VALUE obj)
 {
     shape_t *self;
-    Data_Get_Struct(obj, shape_t, self);
+    TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
     switch (self->obj->nSHPType) {
 	case SHPT_POINT:
 	case SHPT_POINTM:
@@ -659,7 +659,7 @@ static VALUE pt_x(VALUE obj)
 static VALUE pt_y(VALUE obj)
 {
     shape_t *self;
-    Data_Get_Struct(obj, shape_t, self);
+    TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
     switch (self->obj->nSHPType) {
 	case SHPT_POINT:
 	case SHPT_POINTM:
@@ -674,7 +674,7 @@ static VALUE pt_y(VALUE obj)
 static VALUE pt_m(VALUE obj)
 {
     shape_t *self;
-    Data_Get_Struct(obj, shape_t, self);
+    TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
     switch (self->obj->nSHPType) {
 	case SHPT_POINTM:
 	case SHPT_POINTZ:
@@ -690,7 +690,7 @@ static VALUE pt_m(VALUE obj)
 static VALUE pt_z(VALUE obj)
 {
     shape_t *self;
-    Data_Get_Struct(obj, shape_t, self);
+    TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
     switch (self->obj->nSHPType) {
 	case SHPT_POINTZ:
 	    return rb_float_new(self->obj->padfM[0]);

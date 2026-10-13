@@ -37,6 +37,24 @@ static VALUE cMultiPatch;
 
 /* code begins here */
 
+static void shape_free(void *ptr)
+{
+    shape_close(ptr);
+}
+
+static void shapefile_free(void *ptr)
+{
+    shapefile_close(ptr);
+}
+
+static const rb_data_type_t shape_data_type = {
+    "Shapelib::Shape", { 0, shape_free, 0 }
+};
+
+static const rb_data_type_t shapefile_data_type = {
+    "Shapelib::ShapeFile", { 0, shapefile_free, 0 }
+};
+
 #include "valconv.h"
 #include "sfcode.h"
 #include "sflist.h"
