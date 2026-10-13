@@ -1,7 +1,5 @@
 /* valconv.h */
 
-#define SECURE(obj) SecureObject((obj), #obj)
-
 #define SHP_NODATA_LIM	-1.0e-38
 #define SHP_NODATA	-2.0e-38
 #define SHP_NUM2DBL(value) (NIL_P(value) ? SHP_NODATA : NUM2DBL(value))
@@ -302,12 +300,5 @@ static VALUE IntUnpack(int *up, unsigned num)
     }
     buf = rb_str_new((char *)up, sizeof(int) * num);
     return rb_funcall(buf, unpackid, 1, unpackfmt);
-}
-
-static VALUE SecureObject(VALUE obj, const char *name) {
-    if (OBJ_TAINTED(obj) && rb_safe_level() >= 1) {
-	rb_raise(rb_eSecurityError, "tainted %s", name);
-    }
-    return obj;
 }
 

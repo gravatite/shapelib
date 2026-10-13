@@ -11,7 +11,6 @@ static VALUE sf_add_field(int argc, VALUE *args, VALUE obj)
 
     rb_scan_args(argc, args, "31",
 	    &name, &field_type, &field_width, &decimal_place);
-    SECURE(name);
     StringValue(name);
     atype = Ruby2FieldType(field_type);
     width = NUM2INT(field_width);
@@ -45,7 +44,6 @@ static int Ruby2FieldIndex(shapefile_t *sfile, VALUE field)
     if (FIXNUM_P(field)) {
 	return FIX2INT(field);
     } else {
-	SECURE(field);
 	return shapefile_field_index(sfile, StringValuePtr(field));
     }
 }
@@ -237,7 +235,6 @@ static VALUE sf_s_open(int argc, VALUE *argv, VALUE klass)
     VALUE fnam, mode, sf, proc;
     shapefile_t *sfile;
     rb_scan_args(argc, argv, "11&", &fnam, &mode, &proc);
-    SECURE(fnam);
     sfile = shapefile_open(StringValuePtr(fnam), 
 	(NIL_P(mode) ? "rb" : StringValuePtr(mode))
 	);
@@ -257,7 +254,6 @@ static VALUE sf_s_new(int argc, VALUE *argv, VALUE klass)
 	return Qnil;
     }
     rb_scan_args(argc, argv, "21&", &fnam, &shapetype, &attrs, &proc);
-    SECURE(fnam);
     if ((stype = Ruby2ShapeType(shapetype)) == -1) {
 	rb_raise(rb_eArgError, "shapetype must be Shape subclass");
     }
