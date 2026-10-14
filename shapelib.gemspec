@@ -11,10 +11,10 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0".freeze) if s.respond_to? :required_rubygems_version=
   s.require_paths = ["lib".freeze]
-  s.authors = ["prasinos@users.sourceforge.net".freeze, "Mike Mangino".freeze, "Mike Perham".freeze]
+  s.authors = ["prasinos@users.sourceforge.net".freeze, "Mike Mangino".freeze, "Mike Perham".freeze, "Nick Estes".freeze]
   s.date = "2026-10-14"
   s.description = "Simple wrapper around the shapelib library".freeze
-  s.email = "mmangino@elevatedrails.com".freeze
+  s.email = "nick@nickstoys.com".freeze
   s.extensions = ["ext/shapelib_ext/extconf.rb".freeze]
   s.extra_rdoc_files = [
     "README.md"
