@@ -9,9 +9,9 @@ begin
     gem.name = "shapelib"
     gem.summary = %Q{Simple wrapper around the shapelib library}
     gem.description = gem.summary
-    gem.email = %q{mmangino@elevatedrails.com}
+    gem.email = %q{nick@nickstoys.com}
     gem.homepage = "http://github.com/mperham/shapelib"
-    gem.authors =  ["prasinos@users.sourceforge.net", "Mike Mangino", "Mike Perham"]
+    gem.authors =  ["prasinos@users.sourceforge.net", "Mike Mangino", "Mike Perham", "Nick Estes"]
     gem.add_development_dependency 'rake-compiler', '>= 0.7.0'
     gem.has_rdoc = false
     gem.version = Shapelib::VERSION
