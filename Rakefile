@@ -62,26 +62,14 @@ task 'rvm-test' do
 end
 
 unless Rake.application.top_level_tasks == ['rvm-test']
-  require 'jeweler'
-  $LOAD_PATH << File.expand_path('lib')
+  require 'rubygems/package_task'
+  spec = Gem::Specification.load(File.expand_path('shapelib.gemspec', __dir__))
+  abort 'Unable to load shapelib.gemspec' unless spec
+  Gem::PackageTask.new(spec) {}
 
-  begin
-    require 'shapelib/version'
-    Jeweler::Tasks.new do |gem|
-      gem.name = 'shapelib'
-      gem.summary = %(Simple wrapper around the shapelib library)
-      gem.description = gem.summary
-      gem.email = 'nick@nickstoys.com'
-      gem.homepage = 'http://github.com/mperham/shapelib'
-      gem.authors =  ['prasinos@users.sourceforge.net', 'Mike Mangino', 'Mike Perham', 'Nick Estes']
-      gem.add_development_dependency 'rake-compiler', '>= 0.7.0'
-      gem.has_rdoc = false
-      gem.version = Shapelib::VERSION
-      # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
-    end
-    Jeweler::GemcutterTasks.new
-  rescue LoadError => e
-    puts "Jeweler (or a dependency) not available. Install it with: gem install jeweler: #{e.message}"
+  desc 'Run tests, package the gem, and push it to RubyGems.org'
+  task release: %i[test gem] do
+    sh Gem.ruby, '-S', 'gem', 'push', File.join('pkg', spec.file_name)
   end
 
   require 'rake/testtask'
@@ -91,10 +79,9 @@ unless Rake.application.top_level_tasks == ['rvm-test']
     test.verbose = true
   end
 
-  task test: :check_dependencies
+  task test: :compile
   task default: :test
 
-  # require 'rake/rdoctask'
   require 'rdoc/task'
   Rake::RDocTask.new do |rdoc|
     rdoc.rdoc_dir = 'rdoc'

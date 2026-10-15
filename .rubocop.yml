@@ -5,4 +5,5 @@ AllCops:
   NewCops: enable
 Layout/LineLength:
   Enabled: false
-
+Gemspec/DevelopmentDependencies:
+  EnforcedStyle: gemspec

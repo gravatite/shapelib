@@ -1,0 +1,11 @@
+/pkg/
+/tmp/
+/rdoc/
+*.gem
+*.o
+*.obj
+*.so
+*.bundle
+*.dll
+/ext/**/Makefile
+/ext/**/mkmf.log
