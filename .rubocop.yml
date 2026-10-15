@@ -1,0 +1,8 @@
+require:
+  - rubocop-performance
+AllCops:
+  TargetRubyVersion: 2.6
+  NewCops: enable
+Layout/LineLength:
+  Enabled: false
+
