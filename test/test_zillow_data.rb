@@ -3,6 +3,83 @@ require 'test/unit'
 require 'tmpdir'
 
 class TestZillowData < Test::Unit::TestCase
+  def test_hash_constructor_rejects_negative_counts
+    [:n_vertices, :n_parts].each do |key|
+      data = hash_geometry
+      data[key] = -1
+      assert_raise(ArgumentError) { Shapelib::Shape.new(data) }
+    end
+  end
+
+  def test_hash_constructor_rejects_short_arrays
+    [:part_type, :part_start, :xvals, :yvals, :zvals, :mvals].each do |key|
+      data = hash_geometry
+      count = data[[:part_type, :part_start].include?(key) ? :n_parts : :n_vertices]
+      data[key] = data[key].take(count - 1)
+      error = assert_raise(ArgumentError) { Shapelib::Shape.new(data) }
+      assert_match(/#{key}.*#{count}/, error.message)
+    end
+  end
+
+  def test_hash_constructor_preserves_matching_counts
+    data = hash_geometry
+    data['name'] = 'example'
+    assert_equal data, Shapelib::Shape.new(data).to_h
+  end
+
+  def test_hash_constructor_preserves_explicit_prefix_counts
+    data = hash_geometry
+    data[:n_parts] = 1
+    data[:n_vertices] = 2
+    shape = Shapelib::Shape.new(data)
+    assert_equal 1, shape.n_parts
+    assert_equal 2, shape.n_vertices
+    [:xvals, :yvals, :zvals, :mvals, :part_start, :part_type].each do |key|
+      count = [:part_start, :part_type].include?(key) ? 1 : 2
+      assert_equal data[key].take(count), shape.to_h[key]
+    end
+  end
+
+  def test_hash_constructor_reads_each_field_once
+    data = hash_geometry
+    reads = Hash.new(0)
+    input = Object.new
+    input.define_singleton_method(:[]) do |key|
+      reads[key] += 1
+      raise 'field fetched twice' if reads[key] > 1
+      data[key]
+    end
+    assert_equal data, Shapelib::Shape.new(input).to_h
+    expected = [:shape_type, :shape_id, :n_parts, :n_vertices,
+                :part_type, :part_start, :xvals, :yvals, :zvals, :mvals]
+    assert_equal expected.sort, reads.keys.sort
+    assert_equal [1], reads.values.uniq
+  end
+
+  def test_hash_constructor_preserves_optional_xy_arrays
+    data = hash_geometry
+    data[:xvals] = data[:yvals] = nil
+    shape = Shapelib::Shape.new(data)
+    assert_equal [0.0] * data[:n_vertices], shape.xvals
+    assert_equal [0.0] * data[:n_vertices], shape.yvals
+    assert_equal data[:zvals], shape.zvals
+    assert_equal data[:mvals], shape.mvals
+  end
+
+  def test_hash_constructor_still_requires_counts_and_arrays
+    [:n_vertices, :n_parts, :part_type, :part_start].each do |key|
+      data = hash_geometry
+      data[key] = nil
+      assert_raise(TypeError) { Shapelib::Shape.new(data) }
+    end
+    [:zvals, :mvals].each do |key|
+      data = hash_geometry
+      data[key] = nil
+      error = assert_raise(RuntimeError) { Shapelib::Shape.new(data) }
+      assert_equal "missing #{key}", error.message
+    end
+  end
+
   def test_geometry_constructors_reject_empty_inputs
     part = [[0, 0], [1, 1]]
     classes = [Shapelib::Arc, Shapelib::ArcM, Shapelib::ArcZ,
@@ -167,6 +244,11 @@ class TestZillowData < Test::Unit::TestCase
   end
 
   private
+
+  def hash_geometry
+    Shapelib::ArcZ.new([[0, 1, 2, 3], [4, 5, 6, 7]],
+                      [[8, 9, 10, 11], [12, 13, 14, 15]]).to_h
+  end
 
   def assert_block_closes_file
     [nil, RuntimeError.new('block failure')].each do |error|

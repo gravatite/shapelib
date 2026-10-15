@@ -42,11 +42,18 @@ static VALUE HashDeref(VALUE hash, const char *key)
 	static ID op = 0;
 	if (op == 0)
 	    op = rb_intern("[]");
-	return rb_funcall(hash, op, CSTR2SYM(key));
+	return rb_funcall(hash, op, 1, CSTR2SYM(key));
     }
 }
 
 static VALUE sp_field_set(VALUE obj, VALUE name, VALUE val);
+
+static void CheckArrayLength(VALUE array, int count, const char *name)
+{
+    Check_Type(array, T_ARRAY);
+    if (RARRAY_LEN(array) < count)
+	rb_raise(rb_eArgError, "%s must contain at least %d entries", name, count);
+}
 
 static void HashLoadAttrib(VALUE vshape, VALUE hash)
 {
@@ -79,6 +86,11 @@ static VALUE sp_s_new(VALUE klass, VALUE hash)
 {
     shape_t *shape;
     VALUE qlass, vshape;
+    VALUE arrays[6];
+    static const char *array_names[] = {
+	"part_type", "part_start", "xvals", "yvals", "zvals", "mvals"
+    };
+    int i;
     int shape_type, shape_id, n_parts, n_vertices;
     int *part_type, *part_start;
     double *xvals, *yvals, *zvals, *mvals;
@@ -87,14 +99,22 @@ static VALUE sp_s_new(VALUE klass, VALUE hash)
     shape_id = NUM2INT_nil(HashDeref(hash, "shape_id"));
     n_parts = NUM2INT(HashDeref(hash, "n_parts"));
     n_vertices = NUM2INT(HashDeref(hash, "n_vertices"));
-    part_type = IntPack(HashDeref(hash, "part_type"), 1);
-    part_start = IntPack(HashDeref(hash, "part_start"), 0);
-    xvals = DoublePack(HashDeref(hash, "xvals"), 0.0);
-    yvals = DoublePack(HashDeref(hash, "yvals"), 0.0);
-    zvals = DoublePack(HashDeref(hash, "zvals"), 0.0);
-    mvals = DoublePack(HashDeref(hash, "mvals"), SHP_NODATA);
-    if (zvals == NULL) rb_raise(rb_eRuntimeError, "missing zvals");
-    if (mvals == NULL) rb_raise(rb_eRuntimeError, "missing mvals");
+    if (n_parts < 0) rb_raise(rb_eArgError, "n_parts must be nonnegative");
+    if (n_vertices < 0) rb_raise(rb_eArgError, "n_vertices must be nonnegative");
+    for (i = 0; i < 6; i++)
+	arrays[i] = HashDeref(hash, array_names[i]);
+    for (i = 0; i < 6; i++) {
+	if (i < 2 || !NIL_P(arrays[i]))
+	    CheckArrayLength(arrays[i], i < 2 ? n_parts : n_vertices, array_names[i]);
+    }
+    if (NIL_P(arrays[4])) rb_raise(rb_eRuntimeError, "missing zvals");
+    if (NIL_P(arrays[5])) rb_raise(rb_eRuntimeError, "missing mvals");
+    part_type = IntPack(arrays[0], 1);
+    part_start = IntPack(arrays[1], 0);
+    xvals = DoublePack(arrays[2], 0.0);
+    yvals = DoublePack(arrays[3], 0.0);
+    zvals = DoublePack(arrays[4], 0.0);
+    mvals = DoublePack(arrays[5], SHP_NODATA);
     shape = shape_new(shape_type, shape_id,
 	n_parts, part_type, part_start, n_vertices,
 	xvals, yvals, zvals, mvals);
