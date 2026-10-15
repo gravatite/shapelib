@@ -3,6 +3,34 @@ require 'test/unit'
 require 'tmpdir'
 
 class TestZillowData < Test::Unit::TestCase
+  def test_attribute_name_boundaries
+    point = Shapelib::Point.new(1, 2)
+    ['a' * 10, 'b' * 11].each do |name|
+      point[name] = 42
+      assert_equal 42, point[name]
+      assert_equal 42, point.to_h[name]
+    end
+  end
+
+  def test_long_attribute_names_are_truncated
+    name = 'long_attribute_name' * 8
+    prefix = name[0, 11]
+    [0, 16].each do |count|
+      point = Shapelib::Point.new(1, 2)
+      count.times { |i| point["field#{i}"] = i + 1 }
+      point[name] = 42
+      assert_equal 42, point[name]
+      assert_equal 42, point[prefix]
+      assert_equal 42, point[prefix.upcase]
+      assert_equal 42, point.to_h[prefix]
+      assert_equal count + 1, point.to_h.keys.grep(String).size
+      point["#{prefix}_other"] = 43
+      assert_equal 43, point[name]
+      assert_equal count + 1, point.to_h.keys.grep(String).size
+      count.times { |i| assert_equal i + 1, point["field#{i}"] }
+    end
+  end
+
   def test_point_z_coordinate
     point = Shapelib::PointZ.new(1, 2, 3, 4)
     assert_equal 3.0, point.m

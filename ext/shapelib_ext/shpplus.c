@@ -545,14 +545,16 @@ int shape_attrib_index(shape_t *sh, const char *key, int extend)
     }
     for (i = 0; i < sh->nattr; i++) {
 	if (sh->attr[i].type == -1) {
-	    strcpy(sh->attr[i].name, key);
+	    strncpy(sh->attr[i].name, key, sizeof(sh->attr[i].name) - 1);
+	    sh->attr[i].name[sizeof(sh->attr[i].name) - 1] = '\0';
 	    return i;
 	}
     }
     if (extend) {
 	i = sh->nattr;
 	ShapeSetAttrTable(sh, sh->nattr * 2);
-	strcpy(sh->attr[i].name, key);
+	strncpy(sh->attr[i].name, key, sizeof(sh->attr[i].name) - 1);
+	sh->attr[i].name[sizeof(sh->attr[i].name) - 1] = '\0';
 	return i;
     } else {
 	return -1;
