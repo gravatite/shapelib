@@ -219,12 +219,18 @@ static VALUE sf_write(int argc, VALUE *args, VALUE obj)
  * constructor
  */
 
+static VALUE CallShapeFileBlock(VALUE args)
+{
+    rb_funcall(rb_ary_entry(args, 0), rb_intern("call"), 1,
+	rb_ary_entry(args, 1));
+    return Qnil;
+}
+
 static VALUE YieldIfPossible(VALUE proc, VALUE sf)
 {
     if (!NIL_P(proc)) {
-	rb_funcall(proc, rb_intern("call"), 1, sf);
-	sf_close(sf);
-	return Qnil;
+	return rb_ensure(CallShapeFileBlock, rb_ary_new_from_args(2, proc, sf),
+	    sf_close, sf);
     } else {
 	return sf;
     }

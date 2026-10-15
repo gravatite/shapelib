@@ -693,7 +693,7 @@ static VALUE pt_z(VALUE obj)
     TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
     switch (self->obj->nSHPType) {
 	case SHPT_POINTZ:
-	    return rb_float_new(self->obj->padfM[0]);
+	    return rb_float_new(self->obj->padfZ[0]);
 	case SHPT_POINTM:
 	case SHPT_POINT:
 	    return Qnil;
