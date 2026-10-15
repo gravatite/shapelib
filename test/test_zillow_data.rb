@@ -3,6 +3,50 @@ require 'test/unit'
 require 'tmpdir'
 
 class TestZillowData < Test::Unit::TestCase
+  def test_geometry_constructors_reject_empty_inputs
+    part = [[0, 0], [1, 1]]
+    classes = [Shapelib::Arc, Shapelib::ArcM, Shapelib::ArcZ,
+               Shapelib::Polygon, Shapelib::PolygonM, Shapelib::PolygonZ, Shapelib::MultiPatch]
+    classes.each do |klass|
+      [[], [[]], [[], part], [part, []]].each do |args|
+        assert_raise(ArgumentError) { klass.new(*args) }
+      end
+    end
+  end
+
+  def test_multipart_constructor_rejects_non_array_part
+    error = assert_raise(ArgumentError) { Shapelib::Arc.new([[0, 0], [1, 1]], nil) }
+    assert_equal 'arg 1 must be Array', error.message
+  end
+
+  def test_geometry_constructors_accept_single_and_multiple_parts
+    part = [[0, 0], [1, 0], [1, 1], [0, 0]]
+    [Shapelib::Arc, Shapelib::Polygon].each do |klass|
+      single = klass.new(*part)
+      assert_equal 1, single.n_parts
+      assert_equal 4, single.n_vertices
+      assert_equal [0.0, 1.0, 1.0, 0.0], single.xvals
+      multiple = klass.new(part, part)
+      assert_equal 2, multiple.n_parts
+      assert_equal 8, multiple.n_vertices
+      assert_equal single.xvals * 2, multiple.xvals
+    end
+  end
+
+  def test_multipart_constructor_accepts_explicit_part_type
+    shape = Shapelib::MultiPatch.new([:TriangleStrip, [0, 0], [1, 0], [0, 1]])
+    assert_equal 1, shape.n_parts
+    assert_equal 3, shape.n_vertices
+    assert_equal [:TriangleStrip], shape.part_type
+    assert_equal [0.0, 1.0, 0.0], shape.xvals
+  end
+
+  def test_geometry_coordinate_defaults_are_preserved
+    shape = Shapelib::Arc.new([1, 2], [])
+    assert_equal [1.0, 0.0], shape.xvals
+    assert_equal [2.0, 0.0], shape.yvals
+  end
+
   def test_open_filename_rejects_nul
     filename = "test/data/ZillowNeighborhoods-CA/ZillowNeighborhoods-CA\0ignored"
     assert_raise(ArgumentError) { Shapelib::ShapeFile.open(filename) {} }

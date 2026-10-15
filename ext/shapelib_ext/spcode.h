@@ -118,10 +118,6 @@ static int CheckPartSize(int argc, VALUE *argv, int *part_start,
     for (i = 0; i < argc; i++) {
 	VALUE first;
 	int partlen;
-	if (T_ARRAY != TYPE(argv[i])) {
-	    rb_raise(rb_eArgError, "arg %d must be Array", i);
-	    return -1;
-	}
 	partlen = RARRAY_LEN(argv[i]);
 	first = RARRAY_PTR(argv[i])[0];
 	switch (TYPE(first)) {
@@ -195,6 +191,12 @@ static shape_t *NewMultiPart(int argc, VALUE *argv, VALUE klass, int shapetype)
     int n_parts, n_vert;
     int ipart;
 
+    for (ipart = 0; ipart < argc; ipart++) {
+	if (T_ARRAY != TYPE(argv[ipart]))
+	    rb_raise(rb_eArgError, "arg %d must be Array", ipart);
+	if (RARRAY_LEN(argv[ipart]) == 0)
+	    rb_raise(rb_eArgError, "part %d must not be empty", ipart);
+    }
     n_parts = argc;
     part_start = xmalloc(sizeof(int) * n_parts);
     part_type = xmalloc(sizeof(int) * n_parts);
@@ -262,7 +264,11 @@ static VALUE NewShape(int argc, VALUE *argv, VALUE klass, int shapetype)
     shape_t *shape;
     int multipart;
     monitor(("NewShape"));
+    if (argc == 0)
+	rb_raise(rb_eArgError, "at least one point is required");
     if (T_ARRAY == TYPE(argv[0])) {
+	if (RARRAY_LEN(argv[0]) == 0)
+	    rb_raise(rb_eArgError, "first geometry array must not be empty");
 	switch (TYPE( RARRAY_PTR(argv[0])[0] )) {
 	case T_FIXNUM:
 	case T_FLOAT:
