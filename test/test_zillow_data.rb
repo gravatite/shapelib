@@ -3,6 +3,65 @@ require 'test/unit'
 require 'tmpdir'
 
 class TestZillowData < Test::Unit::TestCase
+  def test_open_filename_rejects_nul
+    filename = "test/data/ZillowNeighborhoods-CA/ZillowNeighborhoods-CA\0ignored"
+    assert_raise(ArgumentError) { Shapelib::ShapeFile.open(filename) {} }
+  end
+
+  def test_new_filename_rejects_nul
+    Dir.mktmpdir('shapelib-test-') do |dir|
+      filename = "#{File.join(dir, 'points')}\0ignored"
+      assert_raise(ArgumentError) { Shapelib::ShapeFile.new(filename, Shapelib::Point) {} }
+      assert_empty Dir.children(dir)
+    end
+  end
+
+  def test_open_mode_rejects_nul
+    filename = 'test/data/ZillowNeighborhoods-CA/ZillowNeighborhoods-CA'
+    assert_raise(ArgumentError) { Shapelib::ShapeFile.open(filename, "rb\0ignored") {} }
+  end
+
+  def test_field_creation_rejects_nul
+    Dir.mktmpdir('shapelib-test-') do |dir|
+      Shapelib::ShapeFile.new(File.join(dir, 'points'), Shapelib::Point) do |file|
+        assert_raise(ArgumentError) { file.add_field("name\0ignored", Shapelib::String, 10) }
+        assert_equal 0, file.field_count
+      end
+    end
+  end
+
+  def test_field_lookup_rejects_nul
+    Dir.mktmpdir('shapelib-test-') do |dir|
+      Shapelib::ShapeFile.new(File.join(dir, 'points'), Shapelib::Point) do |file|
+        file.add_field('name', Shapelib::String, 10)
+        assert_equal 0, file.field_index('name')
+        assert_raise(ArgumentError) { file.field_index("name\0ignored") }
+      end
+    end
+  end
+
+  def test_attribute_lookup_rejects_nul
+    point = Shapelib::Point.new(1, 2)
+    point['name'] = 42
+    assert_raise(ArgumentError) { point["name\0ignored"] }
+  end
+
+  def test_attribute_assignment_rejects_nul
+    point = Shapelib::Point.new(1, 2)
+    point['name'] = 42
+    assert_raise(ArgumentError) { point["name\0ignored"] = 43 }
+    assert_equal 42, point['name']
+  end
+
+  def test_attribute_value_rejects_nul_without_changing_previous_value
+    [42, 'before'].each do |value|
+      point = Shapelib::Point.new(1, 2)
+      point['name'] = value
+      assert_raise(ArgumentError) { point['name'] = "after\0ignored" }
+      assert_equal value, point['name']
+    end
+  end
+
   def test_attribute_name_boundaries
     point = Shapelib::Point.new(1, 2)
     ['a' * 10, 'b' * 11].each do |name|

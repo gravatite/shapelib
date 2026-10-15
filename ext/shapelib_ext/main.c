@@ -45,6 +45,7 @@ static void shape_free(void *ptr)
 static void shapefile_free(void *ptr)
 {
     shapefile_close(ptr);
+    xfree(ptr);
 }
 
 static const rb_data_type_t shape_data_type = {

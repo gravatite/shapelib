@@ -467,7 +467,7 @@ static VALUE sp_field_get(VALUE obj, VALUE name)
     int ofs;
 
     TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
-    cname = StringValuePtr(name);
+    cname = StringValueCStr(name);
     ofs = shape_attrib_index(self, cname, 0);
     if (ofs < 0) {
 	return Qnil;
@@ -491,19 +491,20 @@ static VALUE sp_field_get(VALUE obj, VALUE name)
 static VALUE sp_field_set(VALUE obj, VALUE name, VALUE val)
 {
     shape_t *self;
-    char *cname;
+    char *cname, *sval;
     int	ofs;
 
     TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
-    cname = StringValuePtr(name);
+    cname = StringValueCStr(name);
     ofs = shape_attrib_index(self, cname, 1);
     if (ofs < 0) {
 	return Qnil;
     }
     switch (TYPE(val)) {
 	case T_STRING:
+	    sval = StringDup(StringValueCStr(val));
 	    self->attr[ofs].type = FTString;
-	    self->attr[ofs].val.sval = StringDup(StringValuePtr(val));
+	    self->attr[ofs].val.sval = sval;
 	    break;
 	case T_FIXNUM:
 	    self->attr[ofs].type = FTInteger;

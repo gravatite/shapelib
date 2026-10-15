@@ -19,7 +19,7 @@ static VALUE sf_add_field(int argc, VALUE *args, VALUE obj)
 	rb_raise(rb_eArgError, "specify decimal places for Float attribute");
     }
     TypedData_Get_Struct(obj, shapefile_t, &shapefile_data_type, self);
-    r = shapefile_add_field(self, RSTRING_PTR(name), atype, width, wdeci);
+    r = shapefile_add_field(self, StringValueCStr(name), atype, width, wdeci);
     return obj;
 }
 
@@ -44,7 +44,7 @@ static int Ruby2FieldIndex(shapefile_t *sfile, VALUE field)
     if (FIXNUM_P(field)) {
 	return FIX2INT(field);
     } else {
-	return shapefile_field_index(sfile, StringValuePtr(field));
+	return shapefile_field_index(sfile, StringValueCStr(field));
     }
 }
 
@@ -241,8 +241,8 @@ static VALUE sf_s_open(int argc, VALUE *argv, VALUE klass)
     VALUE fnam, mode, sf, proc;
     shapefile_t *sfile;
     rb_scan_args(argc, argv, "11&", &fnam, &mode, &proc);
-    sfile = shapefile_open(StringValuePtr(fnam), 
-	(NIL_P(mode) ? "rb" : StringValuePtr(mode))
+    sfile = shapefile_open(StringValueCStr(fnam),
+	(NIL_P(mode) ? "rb" : StringValueCStr(mode))
 	);
     sf = TypedData_Wrap_Struct(klass, &shapefile_data_type, sfile);
     return YieldIfPossible(proc, sf);
@@ -268,7 +268,7 @@ static VALUE sf_s_new(int argc, VALUE *argv, VALUE klass)
 	    rb_raise(rb_eArgError, "attrs must be Array");
 	}
     }
-    sfile = shapefile_new(StringValuePtr(fnam), stype);
+    sfile = shapefile_new(StringValueCStr(fnam), stype);
     if (sfile == NULL) {
 	rb_raise(rb_eRuntimeError, "shapefile_new failed");
     }
