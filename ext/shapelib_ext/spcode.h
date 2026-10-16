@@ -3,6 +3,13 @@
  */
 #define NUM2DBLo(val) (NIL_P((val)) ? 0.0 : NUM2DBL((val)))
 
+static VALUE WrapShape(VALUE klass, shape_t *shape)
+{
+    if (shape == NULL)
+	rb_raise(rb_eRuntimeError, "SHPCreateObject fails");
+    return TypedData_Wrap_Struct(klass, &shape_data_type, shape);
+}
+
 static int *IntPack(VALUE array, int decode_p)
 {
     int *buf;
@@ -118,14 +125,13 @@ static VALUE sp_s_new(VALUE klass, VALUE hash)
     shape = shape_new(shape_type, shape_id,
 	n_parts, part_type, part_start, n_vertices,
 	xvals, yvals, zvals, mvals);
-    if (shape == NULL) rb_raise(rb_eRuntimeError, "SHPCreateObject fails");
     free(part_type);
     free(part_start);
     if (xvals) free(xvals);
     if (yvals) free(yvals);
     if (zvals) free(zvals);
     if (mvals) free(mvals);
-    vshape = TypedData_Wrap_Struct(qlass, &shape_data_type, shape);
+    vshape = WrapShape(qlass, shape);
     HashLoadAttrib(vshape, hash);
     return vshape;
 }
@@ -306,7 +312,7 @@ static VALUE NewShape(int argc, VALUE *argv, VALUE klass, int shapetype)
     } else {
 	shape = NewSinglePart(argc, argv, klass, shapetype);
     }
-    return TypedData_Wrap_Struct(klass, &shape_data_type, shape);
+    return WrapShape(klass, shape);
 }
 
 static VALUE MultiPointNew(int argc, VALUE *argv, VALUE klass, int shapetype)
@@ -326,7 +332,7 @@ static VALUE MultiPointNew(int argc, VALUE *argv, VALUE klass, int shapetype)
     CollectPoints(argc, argv, x, y, m, z);
     shape = shape_new_obj(shapetype, 1, part_start, NULL, n_vert, x, y, m, z);
     free(dblock);
-    return TypedData_Wrap_Struct(klass, &shape_data_type, shape);
+    return WrapShape(klass, shape);
 }
 
 static VALUE arc_s_new(int argc, VALUE *argv, VALUE klass) {
@@ -398,7 +404,7 @@ static VALUE pt_s_new(int argc, VALUE *argv, VALUE klass)
     rb_scan_args(argc, argv, "21", &vx, &vy, &attrs);
     shape = shape_new_point(SHPT_POINT,
 	NUM2DBLo(vx), NUM2DBLo(vy), 0.0, 0.0);
-    pt = TypedData_Wrap_Struct(klass, &shape_data_type, shape);
+    pt = WrapShape(klass, shape);
     if (!NIL_P(attrs)) {
 	PointAddAttr(pt, attrs);
     }
@@ -412,7 +418,7 @@ static VALUE ptm_s_new(int argc, VALUE *argv, VALUE klass)
     rb_scan_args(argc, argv, "31", &vx, &vy, &vm, &attrs);
     shape = shape_new_point(SHPT_POINTM,
 	NUM2DBLo(vx), NUM2DBLo(vy), SHP_NUM2DBL(vm), 0.0);
-    pt = TypedData_Wrap_Struct(klass, &shape_data_type, shape);
+    pt = WrapShape(klass, shape);
     if (!NIL_P(attrs)) {
 	PointAddAttr(pt, attrs);
     }
@@ -426,7 +432,7 @@ static VALUE ptz_s_new(int argc, VALUE *argv, VALUE klass)
     rb_scan_args(argc, argv, "41", &vx, &vy, &vm, &vz, &attrs);
     shape = shape_new_point(SHPT_POINTZ,
 	NUM2DBLo(vx), NUM2DBLo(vy), SHP_NUM2DBL(vm), NUM2DBLo(vz));
-    pt = TypedData_Wrap_Struct(klass, &shape_data_type, shape);
+    pt = WrapShape(klass, shape);
     if (!NIL_P(attrs)) {
 	PointAddAttr(pt, attrs);
     }
