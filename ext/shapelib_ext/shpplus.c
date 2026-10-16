@@ -80,16 +80,26 @@ static shapefile_t *ShapefileInit(void)
     sfile = xmalloc(sizeof(shapefile_t));
     if (sfile == NULL)
 	return NULL;
+    sfile->hshp = NULL;
+    sfile->hdbf = NULL;
     sfile->nrecs = sfile->nfields = -1;
     sfile->ftab = NULL;
     sfile->irec = 0;
     return sfile;
 }
 
+static void ShapefileFail(shapefile_t *sfile, const char *operation,
+    const char *filename)
+{
+    shapefile_close(sfile);
+    xfree(sfile);
+    rb_raise(rb_eIOError, "%s failed for %s", operation, filename);
+}
+
 static void ShapefileBuildFieldTable(shapefile_t *sfile)
 {
     int i;
-    if (sfile->ftab)
+    if (!sfile->hdbf || sfile->ftab)
 	return;
     sfile->nfields = shapefile_field_count(sfile);
     sfile->ftab = xmalloc(sizeof(field_t) * sfile->nfields);
@@ -144,6 +154,8 @@ shapefile_t *shapefile_open(const char *filename, const char *mode)
     sfile = ShapefileInit();
     sfile->hshp = SHPOpen(filename, mode);
     monitor(("SHPOpen(\"%s\", \"%s\") -> %p", filename, mode, sfile->hshp));
+    if (!sfile->hshp)
+	ShapefileFail(sfile, "SHPOpen", filename);
     sfile->hdbf = DBFOpen(filename, mode);
     monitor(("DBFOpen(\"%s\", \"%s\") -> %p", filename, mode, sfile->hdbf));
     ShapefileBuildFieldTable(sfile);
@@ -156,8 +168,12 @@ shapefile_t *shapefile_new(const char *filename, int shptype)
     sfile = ShapefileInit();
     sfile->hshp = SHPCreate(filename, shptype);
     monitor(("SHPCreate(\"%s\", %d) -> %p", filename, shptype, sfile->hshp));
+    if (!sfile->hshp)
+	ShapefileFail(sfile, "SHPCreate", filename);
     sfile->hdbf = DBFCreate(filename);
     monitor(("DBFCreate(\"%s\") -> %p", filename, sfile->hdbf));
+    if (!sfile->hdbf)
+	ShapefileFail(sfile, "DBFCreate", filename);
     return sfile;
 }
 
@@ -423,6 +439,8 @@ int shapefile_write(shapefile_t *sfile, int irec, shape_t *shape)
     /* precondition */
     if (!sfile->hshp || !shape->obj)
 	return -1;
+    if (!sfile->hdbf)
+	rb_raise(rb_eIOError, "DBF file is not open for writing");
     ShapefileBuildFieldTable(sfile);
     /* write the object */
     r = SHPWriteObject(sfile->hshp, irec, shape->obj);

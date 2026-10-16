@@ -1,8 +1,88 @@
 require 'shapelib'
 require 'test/unit'
 require 'tmpdir'
+require 'fileutils'
 
 class TestZillowData < Test::Unit::TestCase
+  def test_open_rejects_missing_or_corrupt_geometry
+    Dir.mktmpdir('shapelib-test-') do |dir|
+      fixture = 'test/data/ZillowNeighborhoods-CA/ZillowNeighborhoods-CA'
+      FileUtils.cp("#{fixture}.shp", File.join(dir, 'no_index.shp'))
+      File.binwrite(File.join(dir, 'corrupt.shp'), 'not a shapefile')
+      FileUtils.cp("#{fixture}.shx", File.join(dir, 'corrupt.shx'))
+      %w[missing no_index corrupt].each do |name|
+        filename = File.join(dir, name)
+        assert_file_operation_failure('SHPOpen', filename) do |block|
+          Shapelib::ShapeFile.open(filename, &block)
+        end
+      end
+    end
+  end
+
+  def test_creation_rejects_nonexistent_parent
+    Dir.mktmpdir('shapelib-test-') do |dir|
+      filename = File.join(dir, 'absent', 'points')
+      assert_file_operation_failure('SHPCreate', filename) do |block|
+        Shapelib::ShapeFile.new(filename, Shapelib::Point, &block)
+      end
+      assert_empty Dir.children(dir)
+    end
+  end
+
+  def test_creation_rejects_partial_failure_without_deleting_files
+    Dir.mktmpdir('shapelib-test-') do |dir|
+      filename = File.join(dir, 'points')
+      Dir.mkdir("#{filename}.dbf")
+      assert_file_operation_failure('DBFCreate', filename) do |block|
+        Shapelib::ShapeFile.new(filename, Shapelib::Point, &block)
+      end
+      assert_path_exist "#{filename}.shp"
+      assert_path_exist "#{filename}.shx"
+      assert_true File.directory?("#{filename}.dbf")
+    end
+  end
+
+  def test_file_creation_and_open_round_trip
+    Dir.mktmpdir('shapelib-test-') do |dir|
+      filename = File.join(dir, 'points')
+      Shapelib::ShapeFile.new(filename, Shapelib::Point, [['name', Shapelib::String, 10]]) do |file|
+        assert_equal 0, file.write(Shapelib::Point.new(1, 2, { 'name' => 'example' }))
+      end
+      Shapelib::ShapeFile.open(filename) do |file|
+        assert_equal 1, file.size
+        assert_equal 1, file.field_count
+        shape = file.read(0)
+        assert_equal [1.0], shape.xvals
+        assert_equal [2.0], shape.yvals
+        assert_equal 'example', shape['name']
+      end
+    end
+  end
+
+  def test_geometry_only_reads_and_rejects_writes
+    Dir.mktmpdir('shapelib-test-') do |dir|
+      filename = File.join(dir, 'points')
+      Shapelib::ShapeFile.new(filename, Shapelib::Point) do |file|
+        file.write(Shapelib::Point.new(1, 2))
+      end
+      File.unlink("#{filename}.dbf")
+      paths = %w[shp shx].map { |suffix| "#{filename}.#{suffix}" }
+      contents = paths.map { |path| File.binread(path) }
+      Shapelib::ShapeFile.open(filename, 'rb+') do |file|
+        assert_equal 1, file.size
+        assert_equal(-1, file.field_count)
+        assert_nil file.fields
+        assert_equal [1.0], file.read(0).xvals
+        shapes = []
+        file.each { |shape| shapes << shape }
+        assert_equal 1, shapes.size
+        assert_equal [2.0], shapes.first.yvals
+        assert_raise(IOError) { file.write(Shapelib::Point.new(3, 4)) }
+      end
+      assert_equal contents, paths.map { |path| File.binread(path) }
+    end
+  end
+
   def test_hash_constructor_rejects_negative_counts
     [:n_vertices, :n_parts].each do |key|
       data = hash_geometry
@@ -244,6 +324,14 @@ class TestZillowData < Test::Unit::TestCase
   end
 
   private
+
+  def assert_file_operation_failure(operation, filename)
+    yielded = false
+    error = assert_raise(IOError) { yield proc { yielded = true } }
+    assert_false yielded
+    assert_match(/#{Regexp.escape(operation)}/, error.message)
+    assert_match(/#{Regexp.escape(filename)}/, error.message)
+  end
 
   def hash_geometry
     Shapelib::ArcZ.new([[0, 1, 2, 3], [4, 5, 6, 7]],
