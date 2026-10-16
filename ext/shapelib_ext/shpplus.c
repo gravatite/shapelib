@@ -442,22 +442,31 @@ int shapefile_write(shapefile_t *sfile, int irec, shape_t *shape)
     int ifield;
     int iattr;
     int *usedfield;
+    VALUE usedfield_storage = 0;
     /* precondition */
     if (!sfile->hshp || !shape->obj)
 	return -1;
     if (!sfile->hdbf)
 	rb_raise(rb_eIOError, "DBF file is not open for writing");
     ShapefileBuildFieldTable(sfile);
+    /* Reject undefined attributes before changing either file. */
+    for (iattr = 0; iattr < shape->nattr; iattr++) {
+	attrib_t *a = &(shape->attr[iattr]);
+	if (a->type != -1 && DBFGetFieldIndex(sfile->hdbf, a->name) == -1)
+	    rb_raise(rb_eArgError, "attribute %s not defined in ShapeFile", a->name);
+    }
+    /* Ruby can reclaim this temporary buffer if attribute writing raises. */
+    usedfield = ALLOCV_N(int, usedfield_storage, sfile->nfields);
+    for (ifield = 0; ifield < sfile->nfields; ifield++) {
+	usedfield[ifield] = 0;
+    }
     /* write the object */
     r = SHPWriteObject(sfile->hshp, irec, shape->obj);
     monitor(("SHPWriteObject(%p, %d, %p) -> %d", sfile->hshp, irec,
     	shape->obj, r));
-    if (r < 0)
+    if (r < 0) {
+	ALLOCV_END(usedfield_storage);
 	return -1;
-    /* make field table */
-    usedfield = xmalloc(sizeof(int) * sfile->nfields);
-    for (ifield = 0; ifield < sfile->nfields; ifield++) {
-	usedfield[ifield] = 0;
     }
     for (iattr = 0; iattr < shape->nattr; iattr++) {
 	attrib_t	*a;
@@ -466,10 +475,6 @@ int shapefile_write(shapefile_t *sfile, int irec, shape_t *shape)
 	    continue;
 	}
 	ifield = DBFGetFieldIndex(sfile->hdbf, a->name);
-	if (ifield == -1) {
-	    rb_raise(rb_eArgError,
-		"attribute %s not defined in ShapeFile", a->name);
-	}
 	ShapefileWriteAttribute(sfile, r, ifield, a);
 	usedfield[ifield] = 1;
     }
@@ -477,13 +482,12 @@ int shapefile_write(shapefile_t *sfile, int irec, shape_t *shape)
 	int r2;
 	if (usedfield[ifield] == 0) {
 	    r2 = DBFWriteNULLAttribute(sfile->hdbf, r, ifield);
-	    monitor(("DBFWriteNULLAttribute(%p %d %d -> %d",
-		sfile->hdbf, r, ifield, r2));
+	    monitor(("DBFWriteNULLAttribute(%p %d %d -> %d", sfile->hdbf, r, ifield, r2));
 	    if (r2 == 0)
 		rb_raise(rb_eRuntimeError, "write error");
 	}
     }
-    free(usedfield);
+    ALLOCV_END(usedfield_storage);
     return r;
 }
 

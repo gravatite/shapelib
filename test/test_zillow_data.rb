@@ -59,6 +59,54 @@ class TestZillowData < Test::Unit::TestCase
     end
   end
 
+  def test_undefined_attributes_do_not_modify_files
+    [[0, -1], [1, -1], [1, 0]].each do |count, index|
+      Dir.mktmpdir('shapelib-test-') do |dir|
+        filename = File.join(dir, 'points')
+        fields = [['name', Shapelib::String, 10], ['other', Shapelib::Integer, 8]]
+        Shapelib::ShapeFile.new(filename, Shapelib::Point, fields) do |file|
+          count.times { file.write(Shapelib::Point.new(1, 2, { 'name' => 'before', 'other' => 7 })) }
+        end
+        expected = nil
+        Shapelib::ShapeFile.open(filename, 'rb+') do |file|
+          expected = count.times.map { |record| file.read(record).to_h }
+          shape = Shapelib::Point.new(9, 9, { 'name' => 'after', 'missing' => 'bad' })
+          error = assert_raise(ArgumentError) { file.write(shape, index) }
+          assert_equal 'attribute missing not defined in ShapeFile', error.message
+          assert_equal count, file.size
+          assert_equal expected, count.times.map { |record| file.read(record).to_h }
+        end
+        Shapelib::ShapeFile.open(filename) do |file|
+          assert_equal count, file.size
+          assert_equal expected, count.times.map { |record| file.read(record).to_h }
+        end
+      end
+    end
+  end
+
+  def test_writes_ignore_cleared_attributes_and_null_omitted_fields
+    Dir.mktmpdir('shapelib-test-') do |dir|
+      filename = File.join(dir, 'points')
+      fields = [['name', Shapelib::String, 10], ['other', Shapelib::Integer, 8]]
+      Shapelib::ShapeFile.new(filename, Shapelib::Point, fields) do |file|
+        shape = Shapelib::Point.new(1, 2, { 'name' => 'valid', 'missing' => 'discard' })
+        shape['missing'] = nil
+        assert_equal 0, file.write(shape)
+        assert_equal 1, file.write(Shapelib::Point.new(3, 4))
+      end
+      Shapelib::ShapeFile.open(filename) do |file|
+        assert_equal 2, file.size
+        first = file.read(0)
+        assert_equal 'valid', first['name']
+        assert_nil first['other']
+        second = file.read(1)
+        assert_equal [3.0], second.xvals
+        assert_nil second['name']
+        assert_nil second['other']
+      end
+    end
+  end
+
   def test_null_records_are_skipped_only_by_sequential_reads
     [[nil, 1], [1, nil, 2], [1, nil], [nil, nil, 1],
      [1, nil, nil, 2], [nil, nil]].each do |records|
