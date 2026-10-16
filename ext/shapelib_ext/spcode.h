@@ -462,9 +462,9 @@ static VALUE sl_m_new_point(int argc, VALUE *argv, VALUE klass)
 {
     if (2 == argc || (3 == argc && T_HASH == TYPE(argv[2]))) {
 	return pt_s_new(argc, argv, cPoint);
-    } else if (3 == argc || (4 == argc && T_HASH != TYPE(argv[3]))) {
+    } else if (3 == argc || (4 == argc && (T_HASH == TYPE(argv[3]) || NIL_P(argv[3])))) {
 	return ptm_s_new(argc, argv, cPointM);
-    } else if (4 == argc || (5 == argc && T_HASH != TYPE(argv[4]))) {
+    } else if (4 == argc || 5 == argc) {
 	return ptz_s_new(argc, argv, cPointZ);
     } else {
 	rb_raise(rb_eArgError,

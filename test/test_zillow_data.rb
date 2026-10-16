@@ -370,6 +370,38 @@ class TestZillowData < Test::Unit::TestCase
     end
   end
 
+  def test_new_point_selects_constructor_with_optional_attributes
+    [[[1, 2], Shapelib::Point, [1.0, 2.0, nil, nil]],
+     [[1, 2, 3], Shapelib::PointM, [1.0, 2.0, 3.0, nil]],
+     [[1, 2, 3, 4], Shapelib::PointZ, [1.0, 2.0, 3.0, 4.0]]].each do |args, klass, coordinates|
+      [false, true].each do |attributes|
+        point = Shapelib.new_point(*(attributes ? args + [{ 'name' => 'example' }] : args))
+        assert_instance_of klass, point
+        assert_equal coordinates, [:x, :y, :m, :z].map { |method| point.public_send(method) }
+        attributes ? assert_equal('example', point['name']) : assert_nil(point['name'])
+      end
+    end
+  end
+
+  def test_new_point_preserves_explicit_nil_arguments
+    [[[1, 2, nil], Shapelib::PointM, [1.0, 2.0, nil, nil]],
+     [[1, 2, 3, nil], Shapelib::PointM, [1.0, 2.0, 3.0, nil]],
+     [[1, 2, 3, 4, nil], Shapelib::PointZ, [1.0, 2.0, 3.0, 4.0]]].each do |args, klass, coordinates|
+      point = Shapelib.new_point(*args)
+      assert_instance_of klass, point
+      assert_equal coordinates, [:x, :y, :m, :z].map { |method| point.public_send(method) }
+    end
+  end
+
+  def test_new_point_rejects_invalid_arguments
+    [[], [1], [1, 2, 3, 4, {}, 6]].each do |args|
+      assert_raise(ArgumentError) { Shapelib.new_point(*args) }
+    end
+    [42, 'attributes', Object.new].each do |attributes|
+      assert_raise(TypeError) { Shapelib.new_point(1, 2, 3, 4, attributes) }
+    end
+  end
+
   def test_nonempty_point_coordinates_and_wkt
     [Shapelib::Point.new(1, 2), Shapelib::PointM.new(1, 2, 3),
      Shapelib::PointZ.new(1, 2, 3, 4)].each_with_index do |shape, index|
