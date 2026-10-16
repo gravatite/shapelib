@@ -1,6 +1,17 @@
 Shapelib bindings for Ruby
 ===============================
 
+GitHub CI builds and tests each Ruby below on Linux (Ubuntu 24.04, x86_64)
+and macOS (macOS 15, Apple Silicon). Badges show the latest push to `main`.
+
+| Ruby | Linux | macOS (Apple Silicon) |
+| --- | --- | --- |
+| 2.6 | [![Ruby 2.6 / Linux](https://github.com/gravatite/shapelib/actions/workflows/linux-ruby-2.6.yml/badge.svg?branch=main&event=push)](https://github.com/gravatite/shapelib/actions/workflows/linux-ruby-2.6.yml) | [![Ruby 2.6 / macOS](https://github.com/gravatite/shapelib/actions/workflows/macos-ruby-2.6.yml/badge.svg?branch=main&event=push)](https://github.com/gravatite/shapelib/actions/workflows/macos-ruby-2.6.yml) |
+| 3.3 | [![Ruby 3.3 / Linux](https://github.com/gravatite/shapelib/actions/workflows/linux-ruby-3.3.yml/badge.svg?branch=main&event=push)](https://github.com/gravatite/shapelib/actions/workflows/linux-ruby-3.3.yml) | [![Ruby 3.3 / macOS](https://github.com/gravatite/shapelib/actions/workflows/macos-ruby-3.3.yml/badge.svg?branch=main&event=push)](https://github.com/gravatite/shapelib/actions/workflows/macos-ruby-3.3.yml) |
+| 3.4 | [![Ruby 3.4 / Linux](https://github.com/gravatite/shapelib/actions/workflows/linux-ruby-3.4.yml/badge.svg?branch=main&event=push)](https://github.com/gravatite/shapelib/actions/workflows/linux-ruby-3.4.yml) | [![Ruby 3.4 / macOS](https://github.com/gravatite/shapelib/actions/workflows/macos-ruby-3.4.yml/badge.svg?branch=main&event=push)](https://github.com/gravatite/shapelib/actions/workflows/macos-ruby-3.4.yml) |
+| 4.0 | [![Ruby 4.0 / Linux](https://github.com/gravatite/shapelib/actions/workflows/linux-ruby-4.0.yml/badge.svg?branch=main&event=push)](https://github.com/gravatite/shapelib/actions/workflows/linux-ruby-4.0.yml) | [![Ruby 4.0 / macOS](https://github.com/gravatite/shapelib/actions/workflows/macos-ruby-4.0.yml/badge.svg?branch=main&event=push)](https://github.com/gravatite/shapelib/actions/workflows/macos-ruby-4.0.yml) |
+| 4.1.0-preview1 | [![Ruby 4.1.0-preview1 / Linux](https://github.com/gravatite/shapelib/actions/workflows/linux-ruby-4.1-preview.yml/badge.svg?branch=main&event=push)](https://github.com/gravatite/shapelib/actions/workflows/linux-ruby-4.1-preview.yml) | [![Ruby 4.1.0-preview1 / macOS](https://github.com/gravatite/shapelib/actions/workflows/macos-ruby-4.1-preview.yml/badge.svg?branch=main&event=push)](https://github.com/gravatite/shapelib/actions/workflows/macos-ruby-4.1-preview.yml) |
+
 This is a wrapper module of Shapefile C Library for Ruby.  Originally authored by
 prasinos@users.sourceforge.net.
 

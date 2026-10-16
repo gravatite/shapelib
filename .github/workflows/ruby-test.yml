@@ -1,0 +1,53 @@
+name: Shared Ruby tests
+
+on:
+  workflow_call:
+    inputs:
+      ruby-version:
+        required: true
+        type: string
+      os:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Build and test
+    runs-on: ${{ inputs.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ inputs.ruby-version }}
+
+      - name: Install shapelib (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libshp-dev
+
+      - name: Install shapelib (macOS)
+        if: runner.os == 'macOS'
+        run: brew install shapelib
+
+      - name: Install test dependencies
+        run: |
+          gem install rake --version 13.3.1 --no-document
+          gem install test-unit --version 3.7.5 --no-document
+
+      - name: Compile extension
+        shell: bash
+        run: |
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            shapelib_prefix="$(brew --prefix shapelib)"
+            rake compile -- "--with-shapelib-include=$shapelib_prefix/include" "--with-shapelib-lib=$shapelib_prefix/lib"
+          else
+            rake compile
+          fi
+
+      - name: Run tests
+        run: rake test
