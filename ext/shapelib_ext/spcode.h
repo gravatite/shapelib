@@ -523,7 +523,8 @@ static VALUE sp_field_get(VALUE obj, VALUE name)
 static VALUE sp_field_set(VALUE obj, VALUE name, VALUE val)
 {
     shape_t *self;
-    char *cname, *sval;
+    attrib_t replacement;
+    char *cname;
     int	ofs;
 
     TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
@@ -532,27 +533,30 @@ static VALUE sp_field_set(VALUE obj, VALUE name, VALUE val)
     if (ofs < 0) {
 	return Qnil;
     }
+    memset(&replacement.val, 0, sizeof(replacement.val));
     switch (TYPE(val)) {
 	case T_STRING:
-	    sval = StringDup(StringValueCStr(val));
-	    self->attr[ofs].type = FTString;
-	    self->attr[ofs].val.sval = sval;
+	    replacement.type = FTString;
+	    replacement.val.sval = StringDup(StringValueCStr(val));
 	    break;
 	case T_FIXNUM:
-	    self->attr[ofs].type = FTInteger;
-	    self->attr[ofs].val.ival = FIX2INT(val);
+	    replacement.type = FTInteger;
+	    replacement.val.ival = FIX2INT(val);
 	    break;
 	case T_FLOAT:
-	    self->attr[ofs].type = FTDouble;
-	    self->attr[ofs].val.fval = RFLOAT_VALUE(val);
+	    replacement.type = FTDouble;
+	    replacement.val.fval = RFLOAT_VALUE(val);
 	    break;
 	case T_NIL:
-	    self->attr[ofs].type = -1;
+	    replacement.type = -1;
 	    break;
 	default:
 	    rb_raise(rb_eTypeError,
 		    "give me String, Integer, or Float");
     }
+    shape_attrib_clear_value(&self->attr[ofs]);
+    self->attr[ofs].type = replacement.type;
+    self->attr[ofs].val = replacement.val;
     return obj;
 }
 

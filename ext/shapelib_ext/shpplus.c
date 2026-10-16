@@ -579,6 +579,21 @@ int shape_attrib_index(shape_t *sh, const char *key, int extend)
     }
 }
 
+void shape_attrib_clear_value(attrib_t *attr)
+{
+    switch (attr->type) {
+	case -1:
+	case FTInteger:
+	case FTDouble:
+	    break;
+	default:
+	    xfree(attr->val.sval);
+	    break;
+    }
+    attr->type = -1;
+    memset(&attr->val, 0, sizeof(attr->val));
+}
+
 int shape_close(shape_t *shape)
 {
     if (shape->obj) {
@@ -589,16 +604,7 @@ int shape_close(shape_t *shape)
     if (shape->attr) {
 	int i;
 	for (i = 0; i < shape->nattr; i++) {
-	    switch (shape->attr[i].type) {
-		case FTInteger:
-		case FTDouble:
-		    break;
-		case FTString:
-		default:
-		    free(shape->attr[i].val.sval);
-		    shape->attr[i].val.ival = 0;
-		    break;
-	    }
+	    shape_attrib_clear_value(&shape->attr[i]);
 	}
 	free(shape->attr);
 	shape->attr = NULL;

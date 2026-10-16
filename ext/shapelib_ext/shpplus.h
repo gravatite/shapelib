@@ -62,6 +62,7 @@ extern shape_t *shape_new_obj(int shapetype,
 	int n_parts, int *part_start, int *part_type, int n_vert,
 	double *x, double *y, double *m, double *z);
 extern int shape_close(shape_t *shape);
+extern void shape_attrib_clear_value(attrib_t *attr);
 extern int shape_attrib_index(shape_t *sh, const char *key, int extend);
 
 /*

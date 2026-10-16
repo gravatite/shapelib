@@ -263,6 +263,68 @@ class TestZillowData < Test::Unit::TestCase
     end
   end
 
+  def test_attribute_replacement_between_supported_types
+    values = [42, 1.5, 'before', nil]
+    values.product(values).each do |before, after|
+      point = Shapelib::Point.new(1, 2)
+      point['name'] = before
+      assert_same point, point.send(:[]=, 'name', after)
+      assert_equal after, point['name']
+      assert_equal !after.nil?, point.to_h.key?('name')
+    end
+    point = nil
+    GC.start
+  end
+
+  def test_cleared_attribute_slot_can_be_reused
+    [42, 1.5, 'before', nil].each do |value|
+      point = Shapelib::Point.new(1, 2)
+      point['old'] = value
+      point['old'] = nil
+      point['new'] = 'after'
+      assert_nil point['old']
+      assert_equal 'after', point['new']
+      assert_equal ['new'], point.to_h.keys.grep(String)
+    end
+    point = nil
+    GC.start
+  end
+
+  def test_invalid_attribute_replacement_preserves_previous_value
+    [42, 1.5, 'before', nil].each do |value|
+      point = Shapelib::Point.new(1, 2)
+      point['name'] = value
+      assert_raise(TypeError) { point['name'] = Object.new }
+      assert_equal value, point['name']
+      assert_raise(ArgumentError) { point['name'] = "after\0ignored" }
+      assert_equal value, point['name']
+      if 0.size > 4
+        assert_raise(RangeError) { point['name'] = 2**31 }
+        assert_equal value, point['name']
+      end
+    end
+    point = nil
+    GC.start
+  end
+
+  def test_replacing_attributes_read_from_file
+    fixture = 'test/data/ZillowNeighborhoods-CA/ZillowNeighborhoods-CA'
+    Shapelib::ShapeFile.open(fixture) do |file|
+      shape = file.read(0)
+      names = shape.to_h.select { |key, value| key.is_a?(String) && value.is_a?(String) }.keys
+      assert_not_empty names
+      names.each do |name|
+        shape[name] = 'replacement'
+        assert_equal 'replacement', shape[name]
+        shape[name] = nil
+        assert_nil shape[name]
+        assert_false shape.to_h.key?(name)
+      end
+      shape = nil
+      GC.start
+    end
+  end
+
   def test_attribute_name_boundaries
     point = Shapelib::Point.new(1, 2)
     ['a' * 10, 'b' * 11].each do |name|
