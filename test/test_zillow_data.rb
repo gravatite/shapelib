@@ -471,6 +471,49 @@ class TestZillowData < Test::Unit::TestCase
     end
   end
 
+  def test_field_metadata_rejects_invalid_lookups_without_reusing_values
+    Dir.mktmpdir('shapelib-test-') do |dir|
+      fields = [['name', Shapelib::String, 10], ['amount', Shapelib::Float, 12, 3]]
+      Shapelib::ShapeFile.new(File.join(dir, 'points'), Shapelib::Point, fields) do |file|
+        fields.each_with_index do |(name, type, width, decimals), index|
+          assert_equal name, file.field_name(index)
+          assert_equal width, file.field_width(index)
+          assert_equal decimals || 0, file.field_decimals(index)
+          [-1, fields.length, 999].each do |invalid|
+            assert_nil file.field_name(invalid)
+            assert_equal(-1, file.field_width(invalid))
+            assert_equal(-1, file.field_decimals(invalid))
+          end
+          assert_equal(-1, file.field_width('missing'))
+          assert_equal(-1, file.field_decimals('missing'))
+          assert_equal name, file.field_name(index)
+          assert_equal width, file.field_width(name)
+          assert_equal decimals || 0, file.field_decimals(name)
+        end
+      end
+    end
+  end
+
+  def test_unavailable_dbf_metadata_keeps_failure_results
+    Dir.mktmpdir('shapelib-test-') do |dir|
+      filename = File.join(dir, 'points')
+      file = Shapelib::ShapeFile.new(filename, Shapelib::Point, [['name', Shapelib::String, 10]])
+      assert_equal 'name', file.field_name(0)
+      file.close
+      assert_nil file.field_name(0)
+      assert_equal(-1, file.field_width(0))
+      assert_equal(-1, file.field_decimals(0))
+      File.unlink("#{filename}.dbf")
+      Shapelib::ShapeFile.open(filename) do |geometry|
+        assert_nil geometry.field_name(0)
+        assert_equal(-1, geometry.field_width(0))
+        assert_equal(-1, geometry.field_decimals(0))
+      end
+    ensure
+      file.close if file
+    end
+  end
+
   def test_attribute_lookup_rejects_nul
     point = Shapelib::Point.new(1, 2)
     point['name'] = 42

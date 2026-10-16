@@ -222,7 +222,8 @@ int shapefile_field_decimals(shapefile_t *sfile, unsigned ifield)
     int decimals;
     if (NULL == sfile->hdbf)
 	return -1;
-    DBFGetFieldInfo(sfile->hdbf, ifield, NULL, NULL, &decimals);
+    if (DBFGetFieldInfo(sfile->hdbf, ifield, NULL, NULL, &decimals) == FTInvalid)
+	return -1;
     return decimals;
 }
 
@@ -275,7 +276,8 @@ const char *shapefile_field_name(shapefile_t *sfile, unsigned ifield)
     static char buf[DBF_NAMELEN];
     if (NULL == sfile->hdbf)
 	return NULL;
-    DBFGetFieldInfo(sfile->hdbf, ifield, buf, NULL, NULL);
+    if (DBFGetFieldInfo(sfile->hdbf, ifield, buf, NULL, NULL) == FTInvalid)
+	return NULL;
     return buf;
 }
 
@@ -298,7 +300,8 @@ int shapefile_field_width(shapefile_t *sfile, unsigned ifield)
     int width;
     if (NULL == sfile->hdbf)
 	return -1;
-    DBFGetFieldInfo(sfile->hdbf, ifield, NULL, &width, NULL);
+    if (DBFGetFieldInfo(sfile->hdbf, ifield, NULL, &width, NULL) == FTInvalid)
+	return -1;
     return width;
 }
 
