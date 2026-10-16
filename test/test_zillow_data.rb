@@ -59,6 +59,51 @@ class TestZillowData < Test::Unit::TestCase
     end
   end
 
+  def test_null_records_are_skipped_only_by_sequential_reads
+    [[nil, 1], [1, nil, 2], [1, nil], [nil, nil, 1],
+     [1, nil, nil, 2], [nil, nil]].each do |records|
+      Dir.mktmpdir('shapelib-test-') do |dir|
+        filename = File.join(dir, 'points')
+        Shapelib::ShapeFile.new(filename, Shapelib::Point, [['id', Shapelib::Integer, 8]]) do |file|
+          records.each_with_index do |value, index|
+            shape = if value.nil?
+                      Shapelib::Shape.new(empty_geometry(:Null).merge('id' => index))
+                    else
+                      Shapelib::Point.new(value, -value, { 'id' => index })
+                    end
+            file.write(shape)
+          end
+        end
+        expected = records.each_index.reject { |index| records[index].nil? }
+        Shapelib::ShapeFile.open(filename) do |file|
+          assert_equal records.length, file.size
+          records.each_with_index do |value, index|
+            shape = file.read(index)
+            if value.nil?
+              assert_nil shape
+              following = expected.find { |record| record > index }
+              row = file.read
+              following.nil? ? assert_nil(row) : assert_equal(following, row['id'])
+            else
+              assert_equal [value.to_f], shape.xvals
+              assert_equal index, shape['id']
+            end
+          end
+          file.rewind
+          assert_equal expected, expected.map { file.read['id'] }
+          assert_nil file.read
+          assert_nil file.read
+          2.times do
+            ids = []
+            file.each { |shape| ids << shape['id'] }
+            assert_equal expected, ids
+          end
+          assert_equal records.length, file.size
+        end
+      end
+    end
+  end
+
   def test_geometry_only_reads_and_rejects_writes
     Dir.mktmpdir('shapelib-test-') do |dir|
       filename = File.join(dir, 'points')

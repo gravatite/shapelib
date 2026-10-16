@@ -339,6 +339,7 @@ shape_t *shapefile_read(shapefile_t *sfile, int ishape)
 {
     shape_t *shape;
     int i, iattr;
+    int sequential = ishape < 0;
     if (NULL == sfile->hshp)
 	return NULL;
     if (ishape < 0) {
@@ -350,13 +351,18 @@ shape_t *shapefile_read(shapefile_t *sfile, int ishape)
     } else {
 	sfile->irec = ishape + 1;
     }
-    shape = shape_init(SHPReadObject(sfile->hshp, ishape));
-    if (shape == NULL)
-	return NULL;
-    monitor(("SHPReadObject(%p) -> %p", sfile->hshp, shape));
-    if (shape->obj->nSHPType == SHPT_NULL) {
+    while (1) {
+	shape = shape_init(SHPReadObject(sfile->hshp, ishape));
+	if (shape == NULL)
+	    return NULL;
+	monitor(("SHPReadObject(%p) -> %p", sfile->hshp, shape));
+	if (shape->obj->nSHPType != SHPT_NULL)
+	    break;
 	monitor(("shape type NULL"));
-	return NULL;
+	shape_close(shape);
+	if (!sequential)
+	    return NULL;
+	ishape = (sfile->irec)++;
     }
     ShapefileBuildFieldTable(sfile);
     if (NULL == sfile->hdbf)
