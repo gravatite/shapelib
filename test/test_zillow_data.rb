@@ -136,6 +136,45 @@ class TestZillowData < Test::Unit::TestCase
     assert_equal [1], reads.values.uniq
   end
 
+  def test_hash_constructor_snapshots_arrays_before_numeric_conversion
+    [:part_type, :part_start, :xvals, :yvals, :zvals, :mvals].each do |key|
+      [:grow, :clear].each do |mutation|
+        data = hash_geometry
+        expected = data.transform_values { |value| value.is_a?(Array) ? value.dup : value }
+        array = data[key]
+        original = array[0]
+        number = key == :part_type ? 5 : original
+        conversion = [:part_type, :part_start].include?(key) ? :to_int : :to_f
+        value = Object.new
+        value.define_singleton_method(conversion) do
+          mutation == :grow ? array.concat([original] * 16) : array.clear
+          number
+        end
+        array[0] = value
+        assert_equal expected, Shapelib::Shape.new(data).to_h
+        assert_equal mutation == :grow ? expected[key].length + 16 : 0, array.length
+      end
+    end
+  end
+
+  def test_hash_constructor_snapshots_later_arrays_before_numeric_conversion
+    [:part_type, :part_start, :xvals, :yvals, :zvals, :mvals].each_cons(2) do |key, later_key|
+      data = hash_geometry
+      expected = data.transform_values { |value| value.is_a?(Array) ? value.dup : value }
+      later = data[later_key]
+      number = key == :part_type ? 5 : data[key][0]
+      conversion = [:part_type, :part_start].include?(key) ? :to_int : :to_f
+      value = Object.new
+      value.define_singleton_method(conversion) do
+        later.clear
+        number
+      end
+      data[key][0] = value
+      assert_equal expected, Shapelib::Shape.new(data).to_h
+      assert_empty later
+    end
+  end
+
   def test_hash_constructor_preserves_optional_xy_arrays
     data = hash_geometry
     data[:xvals] = data[:yvals] = nil

@@ -13,10 +13,11 @@ static VALUE WrapShape(VALUE klass, shape_t *shape)
 static int *IntPack(VALUE array, int decode_p)
 {
     int *buf;
-    int i;
+    long i, length;
     Check_Type(array, T_ARRAY);
-    buf = xmalloc(sizeof(int) * RARRAY_LEN(array));
-    for (i = 0; i < RARRAY_LEN(array); i++) {
+    length = RARRAY_LEN(array);
+    buf = xmalloc(sizeof(int) * length);
+    for (i = 0; i < length; i++) {
 	if (decode_p)
 	    buf[i] = Ruby2PartType(RARRAY_PTR(array)[i]);
 	else
@@ -28,12 +29,13 @@ static int *IntPack(VALUE array, int decode_p)
 static double *DoublePack(VALUE array, double nilval)
 {
     double *buf;
-    int i;
+    long i, length;
     if (NIL_P(array))
 	return NULL;
     Check_Type(array, T_ARRAY);
-    buf = xmalloc(sizeof(double) * RARRAY_LEN(array));
-    for (i = 0; i < RARRAY_LEN(array); i++) {
+    length = RARRAY_LEN(array);
+    buf = xmalloc(sizeof(double) * length);
+    for (i = 0; i < length; i++) {
 	VALUE v;
 	v = RARRAY_PTR(array)[i];
 	buf[i] = (NIL_P(v) ? nilval : NUM2DBL(RARRAY_PTR(array)[i]));
@@ -110,6 +112,13 @@ static VALUE sp_s_new(VALUE klass, VALUE hash)
     if (n_vertices < 0) rb_raise(rb_eArgError, "n_vertices must be nonnegative");
     for (i = 0; i < 6; i++)
 	arrays[i] = HashDeref(hash, array_names[i]);
+    /* Numeric conversion can mutate any of the caller's arrays. */
+    for (i = 0; i < 6; i++) {
+	if (!NIL_P(arrays[i])) {
+	    Check_Type(arrays[i], T_ARRAY);
+	    arrays[i] = rb_ary_dup(arrays[i]);
+	}
+    }
     for (i = 0; i < 6; i++) {
 	if (i < 2 || !NIL_P(arrays[i]))
 	    CheckArrayLength(arrays[i], i < 2 ? n_parts : n_vertices, array_names[i]);
