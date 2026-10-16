@@ -19,6 +19,12 @@ static void CheckPartStarts(SHPObject *obj)
     }
 }
 
+static void CheckPointVertices(SHPObject *obj)
+{
+    if (obj->nVertices < 1)
+	rb_raise(rb_eArgError, "point has no vertices");
+}
+
 static int *IntPack(VALUE array, int decode_p)
 {
     int *buf;
@@ -698,6 +704,7 @@ static VALUE pt_x(VALUE obj)
 	case SHPT_POINT:
 	case SHPT_POINTM:
 	case SHPT_POINTZ:
+	    CheckPointVertices(self->obj);
 	    return rb_float_new(self->obj->padfX[0]);
 	default:
 	    rb_bug("shape type %d is not Point", self->obj->nSHPType);
@@ -713,6 +720,7 @@ static VALUE pt_y(VALUE obj)
 	case SHPT_POINT:
 	case SHPT_POINTM:
 	case SHPT_POINTZ:
+	    CheckPointVertices(self->obj);
 	    return rb_float_new(self->obj->padfY[0]);
 	default:
 	    rb_bug("shape type %d is not Point", self->obj->nSHPType);
@@ -727,6 +735,7 @@ static VALUE pt_m(VALUE obj)
     switch (self->obj->nSHPType) {
 	case SHPT_POINTM:
 	case SHPT_POINTZ:
+	    CheckPointVertices(self->obj);
 	    return SHP_FLOAT_NEW(self->obj->padfM[0]);
 	case SHPT_POINT:
 	    return Qnil;
@@ -742,6 +751,7 @@ static VALUE pt_z(VALUE obj)
     TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
     switch (self->obj->nSHPType) {
 	case SHPT_POINTZ:
+	    CheckPointVertices(self->obj);
 	    return rb_float_new(self->obj->padfZ[0]);
 	case SHPT_POINTM:
 	case SHPT_POINT:

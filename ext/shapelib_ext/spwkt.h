@@ -29,6 +29,7 @@ static VALUE pt_wkt(VALUE obj)
     char *buf, *cur, *stop;
     VALUE wkt;
     TypedData_Get_Struct(obj, shape_t, &shape_data_type, self);
+    CheckPointVertices(self->obj);
     buflen = wkt_dlen * 2 + 9;
     cur = buf = xmalloc(buflen + 1);
     stop = buf + buflen;
@@ -124,6 +125,8 @@ static VALUE WKTSingleArc(SHPObject *obj)
     VALUE wkt;
     char *buf, *cur, *stop;
     int ivert;
+    if (obj->nVertices < 1)
+	rb_raise(rb_eArgError, "cannot format an empty line");
     buflen = (2 * wkt_dlen + 3) * obj->nVertices + 10;
     cur = buf = xmalloc(buflen + 1);
     stop = cur + buflen;
@@ -216,6 +219,6 @@ static VALUE sp_wkt(VALUE obj)
 	    return pl_wkt(obj);
 	    break;
     }
-    rb_bug("invalid shape type %d", self->obj->nSHPType);
+    rb_raise(rb_eArgError, "unsupported WKT shape type %d", self->obj->nSHPType);
     return Qnil;
 }

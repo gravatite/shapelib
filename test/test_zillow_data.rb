@@ -240,6 +240,63 @@ class TestZillowData < Test::Unit::TestCase
     end
   end
 
+  def test_empty_points_reject_coordinate_reads_and_wkt
+    { Point: [:m, :z], PointM: [:z], PointZ: [] }.each do |type, absent|
+      shape = Shapelib::Shape.new(empty_geometry(type))
+      assert_equal 0, shape.n_vertices
+      assert_equal type, shape.to_h[:shape_type]
+      ([:x, :y, :m, :z, :wkt, :to_s] - absent).each do |method|
+        error = assert_raise(ArgumentError) { shape.public_send(method) }
+        assert_equal 'point has no vertices', error.message
+      end
+      absent.each { |method| assert_nil shape.public_send(method) }
+    end
+  end
+
+  def test_empty_lines_reject_wkt
+    [Shapelib::Arc, Shapelib::ArcM, Shapelib::ArcZ].each do |klass|
+      [klass.new(:Ring), Shapelib::Shape.new(empty_geometry(klass))].each do |shape|
+        assert_equal 0, shape.n_vertices
+        [:wkt, :to_s].each do |method|
+          error = assert_raise(ArgumentError) { shape.public_send(method) }
+          assert_equal 'cannot format an empty line', error.message
+        end
+      end
+    end
+  end
+
+  def test_unsupported_shape_types_reject_wkt
+    { Null: 0, 0 => 0, 99 => 99 }.each do |type, number|
+      shape = Shapelib::Shape.new(empty_geometry(type))
+      assert_equal number == 0 ? :Null : number, shape.shape_type
+      assert_equal shape.shape_type, shape.to_h[:shape_type]
+      [:wkt, :to_s].each do |method|
+        error = assert_raise(ArgumentError) { shape.public_send(method) }
+        assert_equal "unsupported WKT shape type #{number}", error.message
+      end
+    end
+  end
+
+  def test_nonempty_point_coordinates_and_wkt
+    [Shapelib::Point.new(1, 2), Shapelib::PointM.new(1, 2, 3),
+     Shapelib::PointZ.new(1, 2, 3, 4)].each_with_index do |shape, index|
+      assert_equal 1.0, shape.x
+      assert_equal 2.0, shape.y
+      index == 0 ? assert_nil(shape.m) : assert_equal(3.0, shape.m)
+      index == 2 ? assert_equal(4.0, shape.z) : assert_nil(shape.z)
+      assert_equal 'POINT(1 2)', shape.wkt
+      assert_equal shape.wkt, shape.to_s
+    end
+  end
+
+  def test_nonempty_single_line_wkt
+    [Shapelib::Arc, Shapelib::ArcM, Shapelib::ArcZ].each do |klass|
+      shape = klass.new([1, 2], [3, 4])
+      assert_equal 'LINESTRING(1 2, 3 4)', shape.wkt
+      assert_equal shape.wkt, shape.to_s
+    end
+  end
+
   def test_geometry_constructors_reject_empty_inputs
     part = [[0, 0], [1, 1]]
     classes = [Shapelib::Arc, Shapelib::ArcM, Shapelib::ArcZ,
@@ -473,6 +530,11 @@ class TestZillowData < Test::Unit::TestCase
     assert_false yielded
     assert_match(/#{Regexp.escape(operation)}/, error.message)
     assert_match(/#{Regexp.escape(filename)}/, error.message)
+  end
+
+  def empty_geometry(type)
+    { shape_type: type, n_vertices: 0, n_parts: 0, part_type: [], part_start: [],
+      xvals: [], yvals: [], zvals: [], mvals: [] }
   end
 
   def hash_geometry
