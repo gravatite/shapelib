@@ -49,12 +49,26 @@ Use Ruby 2.6 or newer with the development dependencies declared in
 * `rake gem` packages the sources as `pkg/shapelib-<version>.gem`.
   `rake package` also builds this gem.
 * `rake rvm-test` builds and tests every installed RVM Ruby.
+* `rake rdoc` builds HTML documentation when the optional `rdoc` gem is
+  installed. `rake rerdoc` rebuilds it and `rake clobber_rdoc` removes it.
+* `rake clean` removes the current Ruby's build directory. `rake clobber`
+  also removes compiled extensions, all build directories, packages, and
+  generated documentation.
 * `rake release` runs the local tests, packages the gem, and pushes it to
   RubyGems.org using your configured credentials.
 
 Edit metadata in `shapelib.gemspec` and the version in `lib/shapelib/version.rb`.
+Set `MAKE` to use another make command, or pass configuration options with
+`rake compile -- --with-shapelib-include=... --with-shapelib-lib=...`.
 
 License issues
 ==============
 
-Ruby-ShapeLib is provided under LGPL or ShapeLib's MIT-style default license.
+Ruby-ShapeLib code and documentation are available under either MIT or LGPL
+version 2.0, at your option. See [LICENSE](LICENSE), [LICENSE-MIT](LICENSE-MIT),
+and [LICENSE-LGPL](LICENSE-LGPL).
+
+The bundled Zillow neighborhood test data has a separate CC BY-SA 3.0 license.
+Its attribution is in [LICENSE](LICENSE), with the full terms in
+[LICENSE-CC-BY-SA-3.0](LICENSE-CC-BY-SA-3.0). The native shapelib dependency
+retains its own license terms.

@@ -1,0 +1,36 @@
+Ruby-ShapeLib licensing
+======================
+
+Code and documentation
+----------------------
+
+Ruby-ShapeLib is available under either the MIT license (LICENSE-MIT) or
+the GNU Library General Public License version 2.0 (LICENSE-LGPL), at
+your option. SPDX expression: MIT OR LGPL-2.0-only.
+
+Originally authored by prasinos@users.sourceforge.net, with contributions
+from Mike Mangino, Mike Perham, Nick Estes, and other contributors.
+
+The original README offered LGPL or Shapelib's MIT-style default license.
+The original author's project identifies LGPL version 2.0 and MIT:
+https://sourceforge.net/projects/ruby-shapelib/
+
+The native Shapelib C library is installed separately and retains its own
+license notices: https://github.com/OSGeo/shapelib
+
+Bundled test data
+-----------------
+
+The files in test/data/ZillowNeighborhoods-CA/ are Neighborhood Boundaries
+in California, published October 1, 2007. Zillow.com compiled this data
+with the help of municipalities throughout the United States.
+Source: http://www.zillow.com/
+
+This dataset is redistributed without modification under Creative Commons
+Attribution-ShareAlike 3.0 Unported (CC-BY-SA-3.0). Its original attribution
+and license information are retained in ZillowNeighborhoods-CA.shp.xml.
+See LICENSE-CC-BY-SA-3.0 and https://creativecommons.org/licenses/by-sa/3.0/.
+
+The dataset's license is separate from the code's alternative licenses.
+The gemspec lists all three identifiers because the package includes both
+the code and the dataset.

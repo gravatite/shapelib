@@ -4,6 +4,11 @@ require 'rubygems'
 require 'rake'
 require 'open3'
 require 'tmpdir'
+require 'rbconfig'
+require 'shellwords'
+require 'rake/clean'
+require 'rake/testtask'
+require 'rubygems/package_task'
 
 desc 'Build and test every installed RVM Ruby, with a results table and logs'
 task 'rvm-test' do
@@ -61,37 +66,63 @@ task 'rvm-test' do
   end
 end
 
-unless Rake.application.top_level_tasks == ['rvm-test']
-  require 'rubygems/package_task'
-  spec = Gem::Specification.load(File.expand_path('shapelib.gemspec', __dir__))
-  abort 'Unable to load shapelib.gemspec' unless spec
-  Gem::PackageTask.new(spec) {}
+spec = Gem::Specification.load(File.expand_path('shapelib.gemspec', __dir__))
+abort 'Unable to load shapelib.gemspec' unless spec
+Gem::PackageTask.new(spec) {}
 
-  desc 'Run tests, package the gem, and push it to RubyGems.org'
-  task release: %i[test gem] do
-    sh Gem.ruby, '-S', 'gem', 'push', File.join('pkg', spec.file_name)
-  end
-
-  require 'rake/testtask'
-  Rake::TestTask.new(:test) do |test|
-    test.libs = %w[lib test]
-    test.pattern = 'test/**/test_*.rb'
-    test.verbose = true
-  end
-
-  task test: :compile
-  task default: :test
-
-  require 'rdoc/task'
-  Rake::RDocTask.new do |rdoc|
-    rdoc.rdoc_dir = 'rdoc'
-    rdoc.title = 'shapelib'
-    rdoc.rdoc_files.include('README*')
-    rdoc.rdoc_files.include('lib/**/*.rb')
-  end
-
-  gem 'rake-compiler', '>= 0.7.0'
-  require 'rake/extensiontask'
-
-  Rake::ExtensionTask.new('shapelib_ext')
+desc 'Run tests, package the gem, and push it to RubyGems.org'
+task release: %i[test gem] do
+  sh Gem.ruby, '-S', 'gem', 'push', File.join('pkg', spec.file_name)
 end
+
+Rake::TestTask.new(:test) do |test|
+  test.libs = %w[lib test]
+  test.pattern = 'test/**/test_*.rb'
+  test.verbose = true
+end
+
+task test: :compile
+task default: :test
+
+build_dir = File.join('tmp', RUBY_PLATFORM, 'shapelib_ext', RUBY_VERSION)
+extconf = File.expand_path('ext/shapelib_ext/extconf.rb', __dir__)
+makefile = File.join(build_dir, 'Makefile')
+binary = "shapelib_ext.#{RbConfig::CONFIG['DLEXT']}"
+
+file makefile => [extconf] do
+  mkdir_p build_dir
+  Dir.chdir(build_dir) { sh Gem.ruby, extconf, *ARGV.grep(/\A--?/) }
+end
+
+desc 'Compile the extension for the current Ruby'
+task compile: makefile do
+  make = Shellwords.split(ENV['MAKE'] || RbConfig::CONFIG['MAKE'] || 'make')
+  Dir.chdir(build_dir) { sh(*make) }
+  cp File.join(build_dir, binary), File.join('lib', binary)
+end
+task 'compile:shapelib_ext' => :compile
+
+CLEAN.include(build_dir)
+CLOBBER.include('tmp', File.join('lib', binary))
+
+rdoc_files = FileList['README*', 'lib/**/*.rb']
+desc 'Build the HTML documentation'
+task rdoc: 'rdoc/created.rid'
+file 'rdoc/created.rid' => rdoc_files.to_a + ['Rakefile'] do
+  begin
+    require 'rdoc'
+  rescue LoadError => error
+    raise unless error.path == 'rdoc'
+
+    abort 'Documentation requires RDoc. Install it with: gem install rdoc'
+  end
+  RDoc::RDoc.new.document(['--op', 'rdoc', '--title', 'shapelib', *rdoc_files])
+end
+
+desc 'Rebuild the HTML documentation from scratch'
+task rerdoc: %i[clobber_rdoc rdoc]
+desc 'Remove generated HTML documentation'
+task :clobber_rdoc do
+  rm_rf 'rdoc'
+end
+task clobber: :clobber_rdoc

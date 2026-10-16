@@ -6,6 +6,7 @@ Gem::Specification.new do |s|
   s.name = 'shapelib'
   s.version = Shapelib::VERSION
   s.required_ruby_version = '>= 2.6'
+  s.licenses = ['MIT', 'LGPL-2.0-only', 'CC-BY-SA-3.0']
 
   s.required_rubygems_version = Gem::Requirement.new('>= 0') if s.respond_to? :required_rubygems_version=
   s.require_paths = ['lib']
@@ -17,6 +18,10 @@ Gem::Specification.new do |s|
     'README.md'
   ]
   s.files = [
+    'LICENSE',
+    'LICENSE-MIT',
+    'LICENSE-LGPL',
+    'LICENSE-CC-BY-SA-3.0',
     'README.md',
     'Rakefile',
     'doc/Interface.html',
@@ -48,7 +53,6 @@ Gem::Specification.new do |s|
   s.summary = 'Simple wrapper around the shapelib library'
 
   s.add_development_dependency 'rake', '>= 13.0'
-  s.add_development_dependency 'rake-compiler', '>= 0.7.0'
   s.add_development_dependency 'test-unit', '>= 3.0'
   s.metadata['rubygems_mfa_required'] = 'true'
 end
