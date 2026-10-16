@@ -73,6 +73,7 @@ static VALUE WKTSinglePolygon(SHPObject *obj)
     VALUE wkt;
     char *buf, *cur, *stop;
     int ipart, endvert, ivert;
+    CheckPartStarts(obj);
     buflen = (2 * wkt_dlen + 3) * obj->nVertices + obj->nParts * 2 + 9;
     cur = buf = xmalloc(buflen + 1);
     stop = cur + buflen;
@@ -146,6 +147,7 @@ static VALUE WKTMultiArc(SHPObject *obj)
     VALUE wkt;
     char *buf, *cur, *stop;
     int ipart, endvert, ivert;
+    CheckPartStarts(obj);
     buflen = (2 * wkt_dlen + 3) * obj->nVertices + obj->nParts * 1 + 16;
     cur = buf = xmalloc(buflen + 1);
     stop = cur + buflen;

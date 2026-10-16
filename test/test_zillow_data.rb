@@ -101,6 +101,47 @@ class TestZillowData < Test::Unit::TestCase
     end
   end
 
+  def test_hash_constructor_rejects_out_of_bounds_part_starts
+    [:ArcZ, :PolygonZ].each do |type|
+      [-1, 5].each do |start|
+        data = hash_geometry.merge(shape_type: type, part_start: [0, start])
+        error = assert_raise(ArgumentError) { Shapelib::Shape.new(data) }
+        assert_equal 'part_start[1] must be between 0 and 4', error.message
+      end
+    end
+    GC.start
+  end
+
+  def test_hash_constructor_preserves_part_wkt
+    { ArcZ: 'MULTILINESTRING((0 1, 4 5), (8 9, 12 13))',
+      PolygonZ: 'POLYGON((0 1, 4 5), (8 9, 12 13))' }.each do |type, wkt|
+      shape = Shapelib::Shape.new(hash_geometry.merge(shape_type: type))
+      assert_equal [0, 2], shape.part_start
+      assert_equal wkt, shape.wkt
+    end
+  end
+
+  def test_hash_constructor_preserves_empty_parts
+    { ArcZ: 'MULTILINESTRING', PolygonZ: 'POLYGON' }.each do |type, prefix|
+      { [0, 0] => '((), (0 1, 4 5, 8 9, 12 13))',
+        [0, 4] => '((0 1, 4 5, 8 9, 12 13), ())' }.each do |starts, body|
+        shape = Shapelib::Shape.new(hash_geometry.merge(shape_type: type, part_start: starts))
+        assert_equal starts, shape.part_start
+        assert_equal prefix + body, shape.wkt
+      end
+    end
+  end
+
+  def test_hash_constructor_preserves_part_start_normalization_and_prefix_counts
+    [:ArcZ, :PolygonZ].each do |type|
+      expected = Shapelib::Shape.new(hash_geometry.merge(shape_type: type)).to_h
+      [-1, 1, 5].each do |first|
+        data = hash_geometry.merge(shape_type: type, part_start: [first, 2, -1, 5])
+        assert_equal expected, Shapelib::Shape.new(data).to_h
+      end
+    end
+  end
+
   def test_hash_constructor_preserves_matching_counts
     data = hash_geometry
     data['name'] = 'example'

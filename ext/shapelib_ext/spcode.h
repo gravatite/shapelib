@@ -10,6 +10,15 @@ static VALUE WrapShape(VALUE klass, shape_t *shape)
     return TypedData_Wrap_Struct(klass, &shape_data_type, shape);
 }
 
+static void CheckPartStarts(SHPObject *obj)
+{
+    int i;
+    for (i = 0; i < obj->nParts; i++) {
+	if (obj->panPartStart[i] < 0 || obj->panPartStart[i] > obj->nVertices)
+	    rb_raise(rb_eArgError, "part_start[%d] must be between 0 and %d", i, obj->nVertices);
+    }
+}
+
 static int *IntPack(VALUE array, int decode_p)
 {
     int *buf;
@@ -96,9 +105,7 @@ static VALUE sp_s_new(VALUE klass, VALUE hash)
     shape_t *shape;
     VALUE qlass, vshape;
     VALUE arrays[6];
-    static const char *array_names[] = {
-	"part_type", "part_start", "xvals", "yvals", "zvals", "mvals"
-    };
+    static const char *array_names[] = { "part_type", "part_start", "xvals", "yvals", "zvals", "mvals" };
     int i;
     int shape_type, shape_id, n_parts, n_vertices;
     int *part_type, *part_start;
@@ -131,9 +138,7 @@ static VALUE sp_s_new(VALUE klass, VALUE hash)
     yvals = DoublePack(arrays[3], 0.0);
     zvals = DoublePack(arrays[4], 0.0);
     mvals = DoublePack(arrays[5], SHP_NODATA);
-    shape = shape_new(shape_type, shape_id,
-	n_parts, part_type, part_start, n_vertices,
-	xvals, yvals, zvals, mvals);
+    shape = shape_new(shape_type, shape_id, n_parts, part_type, part_start, n_vertices,	xvals, yvals, zvals, mvals);
     free(part_type);
     free(part_start);
     if (xvals) free(xvals);
@@ -141,12 +146,12 @@ static VALUE sp_s_new(VALUE klass, VALUE hash)
     if (zvals) free(zvals);
     if (mvals) free(mvals);
     vshape = WrapShape(qlass, shape);
+    CheckPartStarts(shape->obj);
     HashLoadAttrib(vshape, hash);
     return vshape;
 }
 
-static int CheckPartSize(int argc, VALUE *argv, int *part_start,
-    int *part_type)
+static int CheckPartSize(int argc, VALUE *argv, int *part_start, int *part_type)
 {    
     int pstart = 0;
     int i;
@@ -171,8 +176,7 @@ static int CheckPartSize(int argc, VALUE *argv, int *part_start,
     return pstart;
 }
 
-static void ExtractXYMZ(VALUE v,
-    double *x, double *y, double *m, double *z)
+static void ExtractXYMZ(VALUE v, double *x, double *y, double *m, double *z)
 {
     static int idx = 0, idy, idz, idm;
     if (idx == 0) {
@@ -202,8 +206,7 @@ static void ExtractXYMZ(VALUE v,
     }
 }
 
-static void CollectPoints(int argc, const VALUE *argv,
-    double *x, double *y, double *m, double *z)
+static void CollectPoints(int argc, const VALUE *argv, double *x, double *y, double *m, double *z)
 {
     int i, ofs;
     ofs = 0;
